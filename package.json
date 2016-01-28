@@ -1,0 +1,28 @@
+{
+  "name": "focus-group",
+  "version": "0.1.0",
+  "description": "Create a group of nodes with special focusing powers",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidtheclark/focus-group.git"
+  },
+  "keywords": [
+    "focus",
+    "accessibility",
+    "a11y",
+    "arrows",
+    "keyboard",
+    "navigation",
+    "aria"
+  ],
+  "author": "David Clark",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/davidtheclark/focus-group/issues"
+  },
+  "homepage": "https://github.com/davidtheclark/focus-group#readme"
+}
