@@ -29,10 +29,13 @@ FocusGroup.prototype.deactivate = function() {
 };
 
 FocusGroup.prototype.handleKeyDown = function(event) {
+  // We should only respond to keyboard events when
+  // focus is already within the focus-group
   var activeNodeIndex = this._getActiveNodeIndex();
   if (activeNodeIndex === -1) return;
 
   var arrow = getEventArrowKey(event);
+
   if (!arrow) {
     this.moveFocusByLetter(event);
     return;
@@ -43,6 +46,7 @@ FocusGroup.prototype.handleKeyDown = function(event) {
     this.moveFocusForward(activeNodeIndex);
     return;
   }
+
   if (this._settings.backArrows.indexOf(arrow) !== -1) {
     event.preventDefault();
     this.moveFocusBack(activeNodeIndex);
@@ -132,10 +136,6 @@ FocusGroup.prototype.setNodes = function(nextNodes) {
   this._nodes = nextNodes;
 };
 
-module.exports = function createFocusGroup(options) {
-  return new FocusGroup(options);
-};
-
 function getEventArrowKey(event) {
   if (event.key === 'ArrowUp' || event.keyCode === 38) return 'up';
   if (event.key === 'ArrowDown' || event.keyCode === 40) return 'down';
@@ -151,3 +151,7 @@ function isLetterKeyCode(keyCode) {
 function focusNode(node) {
   if (node && node.focus) node.focus();
 }
+
+module.exports = function createFocusGroup(options) {
+  return new FocusGroup(options);
+};
