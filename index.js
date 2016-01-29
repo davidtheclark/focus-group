@@ -1,46 +1,55 @@
 var activeGroup;
 
-function FocusGroup (options) {
+function FocusGroup(options) {
   this._settings = {
     forwardArrows: options.forward || ['down'],
     backArrows: options.prev || ['up'],
+    letterNavigation: options.letterNavigation,
     cycle: options.cycle,
   }
   this._nodes = options.initialNodes || [];
   this._handleKeyDown = this.handleKeyDown.bind(this);
-};
+}
 
-FocusGropup.prototype.activate = function() {
+FocusGroup.prototype._getActiveNodeIndex = function() {
+  return this._nodes.indexOf(document.activeElement);
+}
+
+FocusGroup.prototype.activate = function() {
   if (activeGroup) activeGroup.deactivate();
   activeGroup = this;
   document.documentElement.addEventListener('keydown', this._handleKeyDown, true);
   return this;
 };
 
-FocusGropup.prototype.deactivate = function() {
+FocusGroup.prototype.deactivate = function() {
   activeGroup = null;
   document.documentElement.removeEventListener('keydown', this._handleKeyDown, true);
   return this;
 };
 
-FocusGropup.prototype.handleKeyDown = function(event) {
-  var arrow = getEventArrowKey(event);
-  if (!arrow) return;
-
-  var activeNodeIndex = this._nodes.indexOf(document.activeElement);
+FocusGroup.prototype.handleKeyDown = function(event) {
+  var activeNodeIndex = this._getActiveNodeIndex();
   if (activeNodeIndex === -1) return;
+
+  var arrow = getEventArrowKey(event);
+  if (!arrow) {
+    this.moveFocusByLetter(event);
+    return;
+  }
 
   if (this._settings.forwardArrows.indexOf(arrow) !== -1) {
     event.preventDefault();
-    return this.moveFocusForward(activeNodeIndex);
+    this.moveFocusForward(activeNodeIndex);
+    return;
   }
   if (this._settings.backArrows.indexOf(arrow) !== -1) {
     event.preventDefault();
-    return this.moveFocusBack(activeNodeIndex);
+    this.moveFocusBack(activeNodeIndex);
   }
 };
 
-FocusGropup.prototype.moveFocusForward = function(activeNodeIndex) {
+FocusGroup.prototype.moveFocusForward = function(activeNodeIndex) {
   var targetNodeIndex;
   if (activeNodeIndex < this._nodes.length - 1) {
     targetNodeIndex = activeNodeIndex + 1;
@@ -53,7 +62,7 @@ FocusGropup.prototype.moveFocusForward = function(activeNodeIndex) {
   return targetNodeIndex;
 };
 
-FocusGropup.prototype.moveFocusBack = function(activeNodeIndex) {
+FocusGroup.prototype.moveFocusBack = function(activeNodeIndex) {
   var targetNodeIndex;
   if (activeNodeIndex > 0) {
     targetNodeIndex = activeNodeIndex - 1;
@@ -66,26 +75,64 @@ FocusGropup.prototype.moveFocusBack = function(activeNodeIndex) {
   return targetNodeIndex;
 };
 
-FocusGropup.prototype.focusNodeAtIndex = function(targetNodeIndex) {
-  var targetNode = this._nodes[targetNodeIndex];
-  if (targetNode && targetNode.focus) targetNode.focus();
+FocusGroup.prototype.moveFocusByLetter = function(event) {
+  if (!isLetterKeyCode(event.keyCode)) return -1;
+
+  // If the letter key is part of a key combo,
+  // let it do whatever it was going to do
+  if (event.ctrlKey || event.metaKey || event.altKey) return -1;
+
+  event.preventDefault();
+
+  var letter = String.fromCharCode(event.keyCode);
+  var activeNodeIndex = this._getActiveNodeIndex() || 0;
+
+  // An array of this group's nodes that starts
+  // with the active one and loops through
+  // the end back around
+  var ouroborosNodes = this._nodes
+    .slice(activeNodeIndex + 1)
+    .concat(this._nodes.slice(0, activeNodeIndex + 1));
+
+  var node, nodeText, i, l;
+  for (i = 0, l = ouroborosNodes.length; i < l; i++) {
+    node = ouroborosNodes[i];
+    nodeText = node.getAttribute('data-focus-group-text') || node.textContent;
+
+    if (!nodeText) {
+      throw new Error('focus-group error: You cannot move focus by letter with text-less nodes');
+    }
+
+    if (nodeText.charAt(0).toLowerCase() === letter.toLowerCase()) {
+      focusNode(node);
+      return this._nodes.indexOf(node);
+    }
+  }
 };
 
-FocusGropup.prototype.addNode = function(node) {
+FocusGroup.prototype.focusNodeAtIndex = function(targetNodeIndex) {
+  focusNode(this._nodes[targetNodeIndex]);
+};
+
+FocusGroup.prototype.addNode = function(node) {
   this._nodes.push(node);
 };
 
-FocusGropup.prototype.removeNode = function(node) {
+FocusGroup.prototype.removeNode = function(node) {
   var nodeIndex = this._nodes.indexOf(node);
   if (nodeIndex === -1) return;
   this._nodes.splice(nodeIndex, 1);
 };
 
-protoOrder.clearNodes = function() {
+FocusGroup.prototype.clearNodes = function() {
   this._nodes = [];
 };
 
-module.exports = function createArrowOrder(options) {
+FocusGroup.prototype.setNodes = function(nextNodes) {
+  this._nodes = nextNodes;
+};
+
+module.exports = function createFocusGroup(options) {
   return new FocusGroup(options);
 };
 
@@ -95,4 +142,12 @@ function getEventArrowKey(event) {
   if (event.key === 'ArrowLeft' || event.keyCode === 37) return 'left';
   if (event.key === 'ArrowRight' || event.keyCode === 39) return 'right';
   return null;
+}
+
+function isLetterKeyCode(keyCode) {
+  return keyCode >= 65 && keyCode <= 90;
+}
+
+function focusNode(node) {
+  if (node && node.focus) node.focus();
 }
