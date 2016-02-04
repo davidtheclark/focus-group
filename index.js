@@ -1,34 +1,31 @@
 function FocusGroup(options) {
   options = options || {};
   this._settings = {
-    forwardArrows: options.forward || ['down'],
-    backArrows: options.prev || ['up'],
+    forwardArrows: options.forwardArrows || ['down'],
+    backArrows: options.backArrows || ['up'],
     letterNavigation: options.letterNavigation,
     cycle: options.cycle,
-
-  }
+  };
   this._nodes = options.initialNodes || [];
   this._handleKeyDown = this.handleKeyDown.bind(this);
-  // Allow mock document for tests
-  this._document = options._document || document;
 }
 
 FocusGroup.activeGroup = null;
 
 FocusGroup.prototype._getActiveNodeIndex = function() {
-  return this._nodes.indexOf(this._document.activeElement);
+  return this._nodes.indexOf(document.activeElement);
 }
 
 FocusGroup.prototype.activate = function() {
   if (FocusGroup.activeGroup) FocusGroup.activeGroup.deactivate();
   FocusGroup.activeGroup = this;
-  this._document.addEventListener('keydown', this._handleKeyDown, true);
+  document.addEventListener('keydown', this._handleKeyDown, true);
   return this;
 };
 
 FocusGroup.prototype.deactivate = function() {
   FocusGroup.activeGroup = null;
-  this._document.removeEventListener('keydown', this._handleKeyDown, true);
+  document.removeEventListener('keydown', this._handleKeyDown, true);
   return this;
 };
 
@@ -140,6 +137,10 @@ FocusGroup.prototype.clearNodes = function() {
 
 FocusGroup.prototype.setNodes = function(nextNodes) {
   this._nodes = nextNodes;
+};
+
+FocusGroup.prototype.getnodes = function() {
+  return this._nodes;
 };
 
 function getEventArrowKey(event) {
