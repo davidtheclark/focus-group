@@ -1,5 +1,7 @@
 # focus-group
 
+[![Build Status](https://travis-ci.org/davidtheclark/focus-group.svg?branch=master)](https://travis-ci.org/davidtheclark/focus-group)
+
 Create a group of nodes with special focusing powers
 
 ## Planned Features
