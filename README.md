@@ -1,6 +1,7 @@
 # focus-group
 
 [![Build Status](https://travis-ci.org/davidtheclark/focus-group.svg?branch=master)](https://travis-ci.org/davidtheclark/focus-group)
+[![Coverage Status](https://coveralls.io/repos/github/davidtheclark/focus-group/badge.svg?branch=master)](https://coveralls.io/github/davidtheclark/focus-group?branch=master)
 
 Create a group of nodes with special focusing powers
 
