@@ -16,12 +16,12 @@ document.body.appendChild(nodeTwo);
 var nodeThree = document.createElement('button');
 nodeThree.innerHTML = 'three';
 document.body.appendChild(nodeThree);
+// nodeFour has no text content
 var nodeFour = document.createElement('button');
-nodeFour.innerHTML = 'four';
 document.body.appendChild(nodeFour);
 
 describe('default settings', function() {
-  before(function() {
+  beforeEach(function() {
     createFocusGroup({
       initialNodes: [nodeOne, nodeTwo, nodeThree],
     }).activate();
@@ -79,7 +79,7 @@ describe('default settings', function() {
 });
 
 describe('all arrows designated', function() {
-  before(function() {
+  beforeEach(function() {
     createFocusGroup({
       initialNodes: [nodeOne, nodeTwo, nodeThree],
       forwardArrows: ['up', 'left'],
@@ -105,7 +105,7 @@ describe('all arrows designated', function() {
 });
 
 describe('cycle: true', function() {
-  before(function() {
+  beforeEach(function() {
     createFocusGroup({
       initialNodes: [nodeOne, nodeTwo, nodeThree],
       cycle: true,
@@ -130,9 +130,9 @@ describe('cycle: true', function() {
 });
 
 describe('letterNavigation: true', function() {
-  before(function() {
+  beforeEach(function() {
     createFocusGroup({
-      initialNodes: [nodeOne, nodeTwo, nodeThree],
+      initialNodes: [nodeOne, nodeTwo, nodeThree, nodeFour],
       letterNavigation: true,
     }).activate();
   });
@@ -148,6 +148,131 @@ describe('letterNavigation: true', function() {
     simulateKeydown({ keyCode: 84 }); // "t"
     assertActiveElement(nodeTwo);
     simulateKeydown({ keyCode: 79 }); // "o"
+    assertActiveElement(nodeOne);
+    simulateKeydown({ keyCode: 70 }); // "f"
+    assertActiveElement(nodeOne);
+  });
+
+  it('non-letters do nothing', function() {
+    nodeOne.focus();
+    simulateKeydown({ keyCode: 54 }); // "5"
+    assertActiveElement(nodeOne);
+    simulateKeydown({ keyCode: 188 }); // ","
+    assertActiveElement(nodeOne);
+  });
+
+  it('letters keys do nothing when ctrl, meta, or alt are also pressed', function() {
+    nodeOne.focus();
+    simulateKeydown({ keyCode: 84, ctrlKey: true }) // "t"
+    assertActiveElement(nodeOne);
+    simulateKeydown({ keyCode: 84, altKey: true }) // "t"
+    assertActiveElement(nodeOne);
+    simulateKeydown({ keyCode: 84, metaKey: true }) // "t"
+    assertActiveElement(nodeOne);
+  });
+});
+
+describe('deactivate()', function() {
+  beforeEach(function() {
+    this.focusGroup = createFocusGroup({ initialNodes: [nodeOne, nodeTwo, nodeThree] }).activate()
+  });
+
+  it('does not respond after deactivation', function() {
+    this.focusGroup.deactivate()
+    nodeOne.focus();
+    simulateKeydown(arrowDownEvent);
+    assertActiveElement(nodeOne);
+    simulateKeydown({ keyCode: 84 }); // "t"
+    assertActiveElement(nodeOne);
+  });
+});
+
+describe('dynamically adding and removing nodes', function() {
+  beforeEach(function() {
+    this.focusGroup = createFocusGroup().activate();
+  });
+
+  it('does nothing without nodes', function() {
+    assert.deepEqual(this.focusGroup.getNodes(), []);
+    nodeOne.focus();
+    simulateKeydown(arrowDownEvent);
+    assertActiveElement(nodeOne);
+    simulateKeydown({ keyCode: 84 }); // "t"
+    assertActiveElement(nodeOne);
+  });
+
+  it('works after adding nodes one at a time with addNode()', function() {
+    assert.deepEqual(this.focusGroup.getNodes(), []);
+    this.focusGroup.addNode(nodeOne);
+    this.focusGroup.addNode(nodeTwo);
+    assert.deepEqual(this.focusGroup.getNodes(), [nodeOne, nodeTwo]);
+    nodeOne.focus();
+    simulateKeydown(arrowDownEvent);
+    assertActiveElement(nodeTwo);
+  });
+
+  it('works after adding all nodels with setNodes()', function() {
+    assert.deepEqual(this.focusGroup.getNodes(), []);
+    this.focusGroup.setNodes([nodeThree, nodeFour]);
+    assert.deepEqual(this.focusGroup.getNodes(), [nodeThree, nodeFour]);
+    nodeThree.focus();
+    simulateKeydown(arrowDownEvent);
+    assertActiveElement(nodeFour);
+  });
+
+  it('works while adding and removing nodes at whim', function() {
+    assert.deepEqual(this.focusGroup.getNodes(), []);
+    this.focusGroup.setNodes([nodeOne, nodeTwo, nodeThree, nodeFour]);
+    assert.deepEqual(this.focusGroup.getNodes(), [nodeOne, nodeTwo, nodeThree, nodeFour]);
+
+    this.focusGroup.removeNode(nodeTwo);
+    assert.deepEqual(this.focusGroup.getNodes(), [nodeOne, nodeThree, nodeFour]);
+    nodeOne.focus();
+    simulateKeydown(arrowDownEvent);
+    assertActiveElement(nodeThree);
+
+    this.focusGroup.clearNodes();
+    assert.deepEqual(this.focusGroup.getNodes(), []);
+    simulateKeydown(arrowDownEvent);
+    assertActiveElement(nodeThree);
+
+    this.focusGroup.setNodes([nodeThree, nodeOne]);
+    assert.deepEqual(this.focusGroup.getNodes(), [nodeThree, nodeOne]);
+    // Remove node that isn't a part of the group, does nothing
+    this.focusGroup.removeNode(nodeFour);
+    assert.deepEqual(this.focusGroup.getNodes(), [nodeThree, nodeOne]);
+    simulateKeydown(arrowDownEvent);
+    assertActiveElement(nodeOne);
+  });
+});
+
+describe('when an object without a focus() method is added to the group', function() {
+  it('throws an error', function() {
+    assert.throws(function() {
+      createFocusGroup({ initialNodes: [nodeOne, nodeTwo, { foo: 'bar' }] }).activate()
+    }, /attempted to add non-element node/);
+  });
+});
+
+describe('focusNodeAtIndex', function() {
+  beforeEach(function() {
+    this.focusGroup = createFocusGroup({ initialNodes: [nodeOne, nodeTwo, nodeThree, nodeFour] })
+      .activate();
+  });
+
+  it('works', function() {
+    nodeOne.focus();
+    this.focusGroup.focusNodeAtIndex(2);
+    assertActiveElement(nodeThree);
+    this.focusGroup.focusNodeAtIndex(0);
+    assertActiveElement(nodeOne);
+    this.focusGroup.focusNodeAtIndex(3);
+    assertActiveElement(nodeFour);
+  });
+
+  it('quietly fails to focus when non-existant index is passed', function() {
+    nodeOne.focus();
+    this.focusGroup.focusNodeAtIndex(6);
     assertActiveElement(nodeOne);
   });
 });

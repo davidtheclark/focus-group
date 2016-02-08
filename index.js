@@ -6,7 +6,8 @@ function FocusGroup(options) {
     letterNavigation: options.letterNavigation,
     cycle: options.cycle,
   };
-  this._nodes = options.initialNodes || [];
+  this._nodes = [];
+  if (options.initialNodes) this.setNodes(options.initialNodes);
   this._handleKeyDown = this.handleKeyDown.bind(this);
 }
 
@@ -106,9 +107,7 @@ FocusGroup.prototype.moveFocusByLetter = function(event) {
     node = ouroborosNodes[i];
     nodeText = node.getAttribute('data-focus-group-text') || node.textContent;
 
-    if (!nodeText) {
-      throw new Error('focus-group error: You cannot move focus by letter with text-less nodes');
-    }
+    if (!nodeText) continue;
 
     if (nodeText.charAt(0).toLowerCase() === letter.toLowerCase()) {
       focusNode(node);
@@ -122,6 +121,7 @@ FocusGroup.prototype.focusNodeAtIndex = function(targetNodeIndex) {
 };
 
 FocusGroup.prototype.addNode = function(node) {
+  this._checkNode(node);
   this._nodes.push(node);
 };
 
@@ -136,11 +136,18 @@ FocusGroup.prototype.clearNodes = function() {
 };
 
 FocusGroup.prototype.setNodes = function(nextNodes) {
+  nextNodes.forEach(this._checkNode);
   this._nodes = nextNodes;
 };
 
-FocusGroup.prototype.getnodes = function() {
+FocusGroup.prototype.getNodes = function() {
   return this._nodes;
+};
+
+FocusGroup.prototype._checkNode = function(node) {
+  if (!node.nodeType || node.nodeType !== window.Node.ELEMENT_NODE) {
+    throw new Error('focus-group: attempted to add non-element node to group');
+  }
 };
 
 function getEventArrowKey(event) {

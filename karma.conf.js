@@ -1,3 +1,5 @@
+var browserifyIstanbul = require('browserify-istanbul');
+
 module.exports = function(config) {
   config.set({
     basePath: '.',
@@ -6,12 +8,24 @@ module.exports = function(config) {
       'browserify',
       'mocha',
     ],
-    files: ['test/**/*.js'],
+    files: [
+      'test/**/*.js',
+    ],
     preprocessors: {
       'test/**/*.js': ['browserify'],
     },
+    reporters: ['progress', 'coverage'],
     browserify: {
       debug: true,
+      transform: [browserifyIstanbul({
+        ignore: ['test/**'],
+      })],
+    },
+    coverageReporter: {
+      reporters: [
+        { type: 'html' },
+        { type: 'lcov', subdir: '.' },
+      ],
     },
     autoWatch: true,
   });
