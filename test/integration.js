@@ -23,7 +23,7 @@ document.body.appendChild(nodeFour);
 describe('default settings', function() {
   beforeEach(function() {
     createFocusGroup({
-      initialNodes: [nodeOne, nodeTwo, nodeThree],
+      nodes: [nodeOne, nodeTwo, nodeThree],
     }).activate();
   });
 
@@ -81,7 +81,7 @@ describe('default settings', function() {
 describe('all arrows designated', function() {
   beforeEach(function() {
     createFocusGroup({
-      initialNodes: [nodeOne, nodeTwo, nodeThree],
+      nodes: [nodeOne, nodeTwo, nodeThree],
       forwardArrows: ['up', 'left'],
       backArrows: ['down', 'right'],
     }).activate();
@@ -107,7 +107,7 @@ describe('all arrows designated', function() {
 describe('cycle: true', function() {
   beforeEach(function() {
     createFocusGroup({
-      initialNodes: [nodeOne, nodeTwo, nodeThree],
+      nodes: [nodeOne, nodeTwo, nodeThree],
       cycle: true,
     }).activate();
   });
@@ -132,7 +132,7 @@ describe('cycle: true', function() {
 describe('letterNavigation: true', function() {
   beforeEach(function() {
     createFocusGroup({
-      initialNodes: [nodeOne, nodeTwo, nodeThree, nodeFour],
+      nodes: [nodeOne, nodeTwo, nodeThree, nodeFour],
       letterNavigation: true,
     }).activate();
   });
@@ -174,7 +174,7 @@ describe('letterNavigation: true', function() {
 
 describe('deactivate()', function() {
   beforeEach(function() {
-    this.focusGroup = createFocusGroup({ initialNodes: [nodeOne, nodeTwo, nodeThree] }).activate()
+    this.focusGroup = createFocusGroup({ nodes: [nodeOne, nodeTwo, nodeThree] }).activate()
   });
 
   it('does not respond after deactivation', function() {
@@ -249,14 +249,14 @@ describe('dynamically adding and removing nodes', function() {
 describe('when an object without a focus() method is added to the group', function() {
   it('throws an error', function() {
     assert.throws(function() {
-      createFocusGroup({ initialNodes: [nodeOne, nodeTwo, { foo: 'bar' }] }).activate()
+      createFocusGroup({ nodes: [nodeOne, nodeTwo, { foo: 'bar' }] }).activate()
     }, /attempted to add non-element node/);
   });
 });
 
 describe('focusNodeAtIndex', function() {
   beforeEach(function() {
-    this.focusGroup = createFocusGroup({ initialNodes: [nodeOne, nodeTwo, nodeThree, nodeFour] })
+    this.focusGroup = createFocusGroup({ nodes: [nodeOne, nodeTwo, nodeThree, nodeFour] })
       .activate();
   });
 

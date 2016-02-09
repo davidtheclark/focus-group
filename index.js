@@ -7,8 +7,8 @@ function FocusGroup(options) {
     cycle: options.cycle,
   };
   this._nodes = [];
-  if (options.initialNodes) this.setNodes(options.initialNodes);
-  this._handleKeyDown = this.handleKeyDown.bind(this);
+  if (options.nodes) this.setNodes(options.nodes);
+  this._handleKeydownEvent = this.handleKeydownEvent.bind(this);
 }
 
 FocusGroup.activeGroup = null;
@@ -20,17 +20,17 @@ FocusGroup.prototype._getActiveNodeIndex = function() {
 FocusGroup.prototype.activate = function() {
   if (FocusGroup.activeGroup) FocusGroup.activeGroup.deactivate();
   FocusGroup.activeGroup = this;
-  document.addEventListener('keydown', this._handleKeyDown, true);
+  document.addEventListener('keydown', this._handleKeydownEvent, true);
   return this;
 };
 
 FocusGroup.prototype.deactivate = function() {
   FocusGroup.activeGroup = null;
-  document.removeEventListener('keydown', this._handleKeyDown, true);
+  document.removeEventListener('keydown', this._handleKeydownEvent, true);
   return this;
 };
 
-FocusGroup.prototype.handleKeyDown = function(event) {
+FocusGroup.prototype.handleKeydownEvent = function(event) {
   // We should only respond to keyboard events when
   // focus is already within the focus-group
   var activeNodeIndex = this._getActiveNodeIndex();
@@ -39,7 +39,7 @@ FocusGroup.prototype.handleKeyDown = function(event) {
   var arrow = getEventArrowKey(event);
 
   if (!arrow) {
-    this.moveFocusByLetter(event);
+    this._moveFocusByLetter(event);
     return;
   }
 
@@ -52,6 +52,7 @@ FocusGroup.prototype.handleKeyDown = function(event) {
   if (this._settings.backArrows.indexOf(arrow) !== -1) {
     event.preventDefault();
     this.moveFocusBack(activeNodeIndex);
+    return;
   }
 };
 
@@ -83,7 +84,7 @@ FocusGroup.prototype.moveFocusBack = function() {
   return targetNodeIndex;
 };
 
-FocusGroup.prototype.moveFocusByLetter = function(event) {
+FocusGroup.prototype._moveFocusByLetter = function(event) {
   if (!isLetterKeyCode(event.keyCode)) return -1;
 
   // If the letter key is part of a key combo,
@@ -116,28 +117,33 @@ FocusGroup.prototype.moveFocusByLetter = function(event) {
   }
 };
 
-FocusGroup.prototype.focusNodeAtIndex = function(targetNodeIndex) {
-  focusNode(this._nodes[targetNodeIndex]);
+FocusGroup.prototype.focusNodeAtIndex = function(index) {
+  focusNode(this._nodes[index]);
+  return this;
 };
 
 FocusGroup.prototype.addNode = function(node) {
   this._checkNode(node);
   this._nodes.push(node);
+  return this;
 };
 
 FocusGroup.prototype.removeNode = function(node) {
   var nodeIndex = this._nodes.indexOf(node);
   if (nodeIndex === -1) return;
   this._nodes.splice(nodeIndex, 1);
+  return this;
 };
 
 FocusGroup.prototype.clearNodes = function() {
   this._nodes = [];
+  return this;
 };
 
 FocusGroup.prototype.setNodes = function(nextNodes) {
   nextNodes.forEach(this._checkNode);
   this._nodes = nextNodes;
+  return this;
 };
 
 FocusGroup.prototype.getNodes = function() {
