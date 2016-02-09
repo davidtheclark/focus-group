@@ -4,7 +4,7 @@ function FocusGroup(options) {
     forwardArrows: options.forwardArrows || ['down'],
     backArrows: options.backArrows || ['up'],
     letterNavigation: options.letterNavigation,
-    cycle: options.cycle,
+    wrap: options.wrap,
   };
   this._nodes = [];
   if (options.nodes) this.setNodes(options.nodes);
@@ -61,7 +61,7 @@ FocusGroup.prototype.moveFocusForward = function() {
   var targetNodeIndex;
   if (activeNodeIndex < this._nodes.length - 1) {
     targetNodeIndex = activeNodeIndex + 1;
-  } else if (this._settings.cycle) {
+  } else if (this._settings.wrap) {
     targetNodeIndex = 0;
   } else {
     targetNodeIndex = activeNodeIndex;
@@ -75,7 +75,7 @@ FocusGroup.prototype.moveFocusBack = function() {
   var targetNodeIndex;
   if (activeNodeIndex > 0) {
     targetNodeIndex = activeNodeIndex - 1;
-  } else if (this._settings.cycle) {
+  } else if (this._settings.wrap) {
     targetNodeIndex = this._nodes.length - 1;
   } else {
     targetNodeIndex = activeNodeIndex;

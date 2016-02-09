@@ -12,7 +12,7 @@ Specifically, you can do the following with your focus group:
 
 These kinds of powers are useful for:
 
-- Accessible menus, like [react-aria-menubutton](//github.com/davidtheclark/rreact-aria-menubutton)
+- Accessible menus, like [react-aria-menubutton](//github.com/davidtheclark/react-aria-menubutton)
 - Any other widgets whose keyboard UX will improve by enabling arrow-key navigation and letter-key jumping
 
 ## API
@@ -34,7 +34,7 @@ var myMegaMenuFocusGroup = createFocusGroup();
 
 **backArrows** { Array of `'up'`, `'down'`, `'left'`, or `'right'` }: Specify which arrows should move the focus *back* through the group (e.g. from index 4 to index 3). Default: `[ 'up' ]`
 
-**cycle** { Boolean }: If `true`, when the arrow keys are moving focus they will cycle through the group. That is, when focus is on the last item and you move focus forward, the first item will focus; and when focus is on the first item and you move focus back, the last item will focus.
+**wrap** { Boolean }: If `true`, when the arrow keys are moving focus they will wrap around the group. That is, when focus is on the last item and you move focus forward, the first item will focus; and when focus is on the first item and you move focus back, the last item will focus.
 
 **letterNavigation** { Boolean }: If `true`, letter navigation is enabled (see below). Default: `false`.
 

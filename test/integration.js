@@ -104,15 +104,15 @@ describe('all arrows designated', function() {
   });
 });
 
-describe('cycle: true', function() {
+describe('wrap: true', function() {
   beforeEach(function() {
     createFocusGroup({
       nodes: [nodeOne, nodeTwo, nodeThree],
-      cycle: true,
+      wrap: true,
     }).activate();
   });
 
-  it('down arrow cycles forward', function() {
+  it('down arrow wraps forward', function() {
     nodeTwo.focus();
     simulateKeydown(arrowDownEvent);
     assertActiveElement(nodeThree);
@@ -120,7 +120,7 @@ describe('cycle: true', function() {
     assertActiveElement(nodeOne);
   });
 
-  it('up arrow cycles back', function() {
+  it('up arrow wraps back', function() {
     nodeTwo.focus();
     simulateKeydown(arrowUpEvent);
     assertActiveElement(nodeOne);
