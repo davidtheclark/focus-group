@@ -3,14 +3,14 @@ function FocusGroup(options) {
   this._settings = {
     forwardArrows: options.forwardArrows || ['down'],
     backArrows: options.backArrows || ['up'],
-    letterNavigation: options.letterNavigation,
     wrap: options.wrap,
+    stringSearch: options.stringSearch,
     stringSearchDelay: 800,
   };
-  this._nodeReps = [];
-  if (options.nodes) this.setNodes(options.nodes);
-  this._handleKeydownEvent = this.handleKeydownEvent.bind(this);
   this._searchString = '';
+  this._members = [];
+  if (options.members) this.setMembers(options.members);
+  this._boundHandleKeydownEvent = this._handleKeydownEvent.bind(this);
 }
 
 FocusGroup.activeGroup = null;
@@ -18,22 +18,22 @@ FocusGroup.activeGroup = null;
 FocusGroup.prototype.activate = function() {
   if (FocusGroup.activeGroup) FocusGroup.activeGroup.deactivate();
   FocusGroup.activeGroup = this;
-  document.addEventListener('keydown', this._handleKeydownEvent, true);
+  document.addEventListener('keydown', this._boundHandleKeydownEvent, true);
   return this;
 };
 
 FocusGroup.prototype.deactivate = function() {
   FocusGroup.activeGroup = null;
-  document.removeEventListener('keydown', this._handleKeydownEvent, true);
+  document.removeEventListener('keydown', this._boundHandleKeydownEvent, true);
   this._clearSearchStringRefreshTimer();
   return this;
 };
 
-FocusGroup.prototype.handleKeydownEvent = function(event) {
+FocusGroup.prototype._handleKeydownEvent = function(event) {
   // We should only respond to keyboard events when
   // focus is already within the focus-group
-  var activeNodeIndex = this._getActiveNodeIndex();
-  if (activeNodeIndex === -1) return;
+  var activeElementIndex = this._getActiveElementIndex();
+  if (activeElementIndex === -1) return;
 
   var arrow = getEventArrowKey(event);
 
@@ -44,47 +44,47 @@ FocusGroup.prototype.handleKeydownEvent = function(event) {
 
   if (this._settings.forwardArrows.indexOf(arrow) !== -1) {
     event.preventDefault();
-    this.moveFocusForward(activeNodeIndex);
+    this.moveFocusForward();
     return;
   }
 
   if (this._settings.backArrows.indexOf(arrow) !== -1) {
     event.preventDefault();
-    this.moveFocusBack(activeNodeIndex);
+    this.moveFocusBack();
     return;
   }
 };
 
 FocusGroup.prototype.moveFocusForward = function() {
-  var activeNodeIndex = this._getActiveNodeIndex();
-  var targetNodeIndex;
-  if (activeNodeIndex < this._nodeReps.length - 1) {
-    targetNodeIndex = activeNodeIndex + 1;
+  var activeElementIndex = this._getActiveElementIndex();
+  var targetIndex;
+  if (activeElementIndex < this._members.length - 1) {
+    targetIndex = activeElementIndex + 1;
   } else if (this._settings.wrap) {
-    targetNodeIndex = 0;
+    targetIndex = 0;
   } else {
-    targetNodeIndex = activeNodeIndex;
+    targetIndex = activeElementIndex;
   }
-  this.focusNodeAtIndex(targetNodeIndex);
-  return targetNodeIndex;
+  this.focusNodeAtIndex(targetIndex);
+  return targetIndex;
 };
 
 FocusGroup.prototype.moveFocusBack = function() {
-  var activeNodeIndex = this._getActiveNodeIndex();
-  var targetNodeIndex;
-  if (activeNodeIndex > 0) {
-    targetNodeIndex = activeNodeIndex - 1;
+  var activeElementIndex = this._getActiveElementIndex();
+  var targetIndex;
+  if (activeElementIndex > 0) {
+    targetIndex = activeElementIndex - 1;
   } else if (this._settings.wrap) {
-    targetNodeIndex = this._nodeReps.length - 1;
+    targetIndex = this._members.length - 1;
   } else {
-    targetNodeIndex = activeNodeIndex;
+    targetIndex = activeElementIndex;
   }
-  this.focusNodeAtIndex(targetNodeIndex);
-  return targetNodeIndex;
+  this.focusNodeAtIndex(targetIndex);
+  return targetIndex;
 };
 
 FocusGroup.prototype._handleNonArrowKey = function(event) {
-  if (!this._settings.letterNavigation) return;
+  if (!this._settings.stringSearch) return;
 
   // While a string search is underway, ignore spaces and prevent their default
   if (this._searchString !== '' && (event.key === ' ' || event.keyCode === 32)) {
@@ -122,84 +122,89 @@ FocusGroup.prototype._startSearchStringRefreshTimer = function() {
 };
 
 FocusGroup.prototype._clearSearchStringRefreshTimer = function() {
-  if (this._stringSearchTimer) {
-    clearTimeout(this._stringSearchTimer);
-  }
+  clearTimeout(this._stringSearchTimer);
 }
 
 FocusGroup.prototype._runStringSearch = function() {
   this._startSearchStringRefreshTimer();
-  var nodeRep, nodeText;
-  for (var i = 0, l = this._nodeReps.length; i < l; i++) {
-    nodeRep = this._nodeReps[i];
-    if (!nodeRep.text) continue;
+  var member;
+  for (var i = 0, l = this._members.length; i < l; i++) {
+    member = this._members[i];
+    if (!member.text) continue;
 
-    if (nodeRep.text.indexOf(this._searchString) === 0) {
-      return focusNode(nodeRep.node);
+    if (member.text.indexOf(this._searchString) === 0) {
+      return focusNode(member.node);
     }
   }
 }
 
 FocusGroup.prototype._findIndexOfNode = function(searchNode) {
-  for (var i = 0, l = this._nodeReps.length; i < l; i++) {
-    if (this._nodeReps[i].node === searchNode) {
+  for (var i = 0, l = this._members.length; i < l; i++) {
+    if (this._members[i].node === searchNode) {
       return i;
     }
   }
   return -1;
 }
 
-FocusGroup.prototype._getActiveNodeIndex = function() {
+FocusGroup.prototype._getActiveElementIndex = function() {
   return this._findIndexOfNode(document.activeElement);
 };
 
 FocusGroup.prototype.focusNodeAtIndex = function(index) {
-  var nodeRep = this._nodeReps[index];
-  if (nodeRep) focusNode(nodeRep.node);
+  var member = this._members[index];
+  if (member) focusNode(member.node);
   return this;
 };
 
-FocusGroup.prototype.addNode = function(input) {
+FocusGroup.prototype.addMember = function(member, index) {
   var node;
   var nodeText;
-  if (input.node && input.text) {
-    node = this._checkNode(input.node);
-    nodeText = input.text;
+  if (member.node && member.text) {
+    node = this._checkNode(member.node);
+    nodeText = member.text;
   } else {
-    node = this._checkNode(input);
+    node = this._checkNode(member);
     nodeText = node.getAttribute('data-focus-group-text') || node.textContent || '';
   }
 
   var cleanedNodeText = nodeText.replace(/\s/g, '').toLowerCase();
-
-  this._nodeReps.push({
+  var member = {
     node: node,
     text: cleanedNodeText,
-  });
-  return this;
-};
+  };
 
-FocusGroup.prototype.removeNode = function(node) {
-  var nodeIndex = this._findIndexOfNode(node);
-  if (nodeIndex === -1) return;
-  this._nodeReps.splice(nodeIndex, 1);
-  return this;
-};
-
-FocusGroup.prototype.clearNodes = function() {
-  this._nodeReps = [];
-  return this;
-};
-
-FocusGroup.prototype.setNodes = function(nextNodes) {
-  for (var i = 0, l = nextNodes.length; i < l; i++) {
-    this.addNode(nextNodes[i]);
+  if (index) {
+    this._members.splice(index, 0, member);
+  } else {
+    this._members.push(member);
   }
   return this;
 };
 
-FocusGroup.prototype.getNodes = function() {
-  return this._nodeReps;
+FocusGroup.prototype.removeMember = function(member) {
+  var removalIndex = (typeof member === 'number')
+    ? member
+    : this._findIndexOfNode(member);
+  if (removalIndex === -1) return;
+  this._members.splice(removalIndex, 1);
+  return this;
+};
+
+FocusGroup.prototype.clearMembers = function() {
+  this._members = [];
+  return this;
+};
+
+FocusGroup.prototype.setMembers = function(nextMembers) {
+  for (var i = 0, l = nextMembers.length; i < l; i++) {
+    this.addMember(nextMembers[i]);
+  }
+  return this;
+};
+
+FocusGroup.prototype.getMembers = function() {
+  return this._members;
 };
 
 FocusGroup.prototype._checkNode = function(node) {

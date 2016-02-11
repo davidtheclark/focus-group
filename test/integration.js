@@ -24,7 +24,7 @@ document.body.appendChild(nodeFour);
 describe('default settings', function() {
   beforeEach(function() {
     createFocusGroup({
-      nodes: [nodeOne, nodeTwo, nodeThree],
+      members: [nodeOne, nodeTwo, nodeThree],
     }).activate();
   });
 
@@ -82,7 +82,7 @@ describe('default settings', function() {
 describe('all arrows designated', function() {
   beforeEach(function() {
     createFocusGroup({
-      nodes: [nodeOne, nodeTwo, nodeThree],
+      members: [nodeOne, nodeTwo, nodeThree],
       forwardArrows: ['up', 'left'],
       backArrows: ['down', 'right'],
     }).activate();
@@ -108,7 +108,7 @@ describe('all arrows designated', function() {
 describe('wrap: true', function() {
   beforeEach(function() {
     createFocusGroup({
-      nodes: [nodeOne, nodeTwo, nodeThree],
+      members: [nodeOne, nodeTwo, nodeThree],
       wrap: true,
     }).activate();
   });
@@ -130,15 +130,15 @@ describe('wrap: true', function() {
   });
 });
 
-describe('letterNavigation: true', function() {
+describe('stringSearch: true', function() {
   beforeEach(function() {
     createFocusGroup({
-      nodes: [nodeOne, nodeTwo, nodeThree, nodeFour],
-      letterNavigation: true,
+      members: [nodeOne, nodeTwo, nodeThree, nodeFour],
+      stringSearch: true,
     }).activate();
   });
 
-  it('letter moves to next node with that letter, cycling', function(done) {
+  it('letter moves to next node with that letter', function(done) {
     nodeOne.focus();
     var q = queue(1);
     q.defer(after, 0, function() {
@@ -189,7 +189,7 @@ describe('letterNavigation: true', function() {
 
 describe('deactivate()', function() {
   beforeEach(function() {
-    this.focusGroup = createFocusGroup({ nodes: [nodeOne, nodeTwo, nodeThree] }).activate()
+    this.focusGroup = createFocusGroup({ members: [nodeOne, nodeTwo, nodeThree] }).activate()
   });
 
   it('does not respond after deactivation', function() {
@@ -208,7 +208,7 @@ describe('dynamically adding and removing nodes', function() {
   });
 
   it('does nothing without nodes', function() {
-    assert.deepEqual(this.focusGroup.getNodes(), []);
+    assert.deepEqual(this.focusGroup.getMembers(), []);
     nodeOne.focus();
     simulateKeydown(arrowDownEvent);
     assertActiveElement(nodeOne);
@@ -216,11 +216,11 @@ describe('dynamically adding and removing nodes', function() {
     assertActiveElement(nodeOne);
   });
 
-  it('works after adding nodes one at a time with addNode()', function() {
-    assert.deepEqual(this.focusGroup.getNodes(), []);
-    this.focusGroup.addNode(nodeOne);
-    this.focusGroup.addNode(nodeTwo);
-    assert.deepEqual(this.focusGroup.getNodes(), [
+  it('works after adding nodes one at a time with addMember()', function() {
+    assert.deepEqual(this.focusGroup.getMembers(), []);
+    this.focusGroup.addMember(nodeOne);
+    this.focusGroup.addMember(nodeTwo);
+    assert.deepEqual(this.focusGroup.getMembers(), [
       { node: nodeOne, text: 'one' },
       { node: nodeTwo, text: 'two' },
     ]);
@@ -229,10 +229,10 @@ describe('dynamically adding and removing nodes', function() {
     assertActiveElement(nodeTwo);
   });
 
-  it('works after adding all nodels with setNodes()', function() {
-    assert.deepEqual(this.focusGroup.getNodes(), []);
-    this.focusGroup.setNodes([nodeThree, nodeFour]);
-    assert.deepEqual(this.focusGroup.getNodes(), [
+  it('works after adding all nodels with setMembers()', function() {
+    assert.deepEqual(this.focusGroup.getMembers(), []);
+    this.focusGroup.setMembers([nodeThree, nodeFour]);
+    assert.deepEqual(this.focusGroup.getMembers(), [
       { node: nodeThree, text: 'three' },
       { node: nodeFour, text: '' },
     ]);
@@ -242,17 +242,17 @@ describe('dynamically adding and removing nodes', function() {
   });
 
   it('works while adding and removing nodes at whim', function() {
-    assert.deepEqual(this.focusGroup.getNodes(), []);
-    this.focusGroup.setNodes([nodeOne, nodeTwo, nodeThree, nodeFour]);
-    assert.deepEqual(this.focusGroup.getNodes(), [
+    assert.deepEqual(this.focusGroup.getMembers(), []);
+    this.focusGroup.setMembers([nodeOne, nodeTwo, nodeThree, nodeFour]);
+    assert.deepEqual(this.focusGroup.getMembers(), [
       { node: nodeOne, text: 'one' },
       { node: nodeTwo, text: 'two' },
       { node: nodeThree, text: 'three' },
       { node: nodeFour, text: '' },
     ]);
 
-    this.focusGroup.removeNode(nodeTwo);
-    assert.deepEqual(this.focusGroup.getNodes(), [
+    this.focusGroup.removeMember(nodeTwo);
+    assert.deepEqual(this.focusGroup.getMembers(), [
       { node: nodeOne, text: 'one' },
       { node: nodeThree, text: 'three' },
       { node: nodeFour, text: '' },
@@ -261,19 +261,19 @@ describe('dynamically adding and removing nodes', function() {
     simulateKeydown(arrowDownEvent);
     assertActiveElement(nodeThree);
 
-    this.focusGroup.clearNodes();
-    assert.deepEqual(this.focusGroup.getNodes(), []);
+    this.focusGroup.clearMembers();
+    assert.deepEqual(this.focusGroup.getMembers(), []);
     simulateKeydown(arrowDownEvent);
     assertActiveElement(nodeThree);
 
-    this.focusGroup.setNodes([nodeThree, nodeOne]);
-    assert.deepEqual(this.focusGroup.getNodes(), [
+    this.focusGroup.setMembers([nodeThree, nodeOne]);
+    assert.deepEqual(this.focusGroup.getMembers(), [
       { node: nodeThree, text: 'three' },
       { node: nodeOne, text: 'one' },
     ]);
     // Remove node that isn't a part of the group, does nothing
-    this.focusGroup.removeNode(nodeFour);
-    assert.deepEqual(this.focusGroup.getNodes(), [
+    this.focusGroup.removeMember(nodeFour);
+    assert.deepEqual(this.focusGroup.getMembers(), [
       { node: nodeThree, text: 'three' },
       { node: nodeOne, text: 'one' },
     ]);
@@ -285,14 +285,14 @@ describe('dynamically adding and removing nodes', function() {
 describe('when an object without a focus() method is added to the group', function() {
   it('throws an error', function() {
     assert.throws(function() {
-      createFocusGroup({ nodes: [nodeOne, nodeTwo, { foo: 'bar' }] }).activate()
+      createFocusGroup({ members: [nodeOne, nodeTwo, { foo: 'bar' }] }).activate()
     });
   });
 });
 
 describe('focusNodeAtIndex', function() {
   beforeEach(function() {
-    this.focusGroup = createFocusGroup({ nodes: [nodeOne, nodeTwo, nodeThree, nodeFour] })
+    this.focusGroup = createFocusGroup({ members: [nodeOne, nodeTwo, nodeThree, nodeFour] })
       .activate();
   });
 

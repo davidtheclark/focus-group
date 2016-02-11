@@ -8,18 +8,34 @@ Create a group of nodes with special focus-related powers.
 Specifically, you can do the following with your focus group:
 
 - Use arrow keys to move focus through the nodes
-- Use letter keys to jump focus to a specific node
+- Type (with letters) to jump focus to a specific node based on its text
+
+Essentially, it mimics some of the essential keyboard interactions of a native `<select>`.
 
 These kinds of powers are useful for:
 
 - Accessible menus, like [react-aria-menubutton](//github.com/davidtheclark/react-aria-menubutton)
 - Any other widgets whose keyboard UX will improve by enabling arrow-key navigation and letter-key jumping
 
+## Concepts
+
+A focus-group is composed of members.
+
+The order of the members matters, because focus moves forwards and backwards through the group, in order.
+
+Each member consists of a DOM node and some text associated with that node.
+The member's text will be used for keyboard navigation.
+Each member's text can be established in a few ways:
+
+- It can be manually specified when adding the member to the group, via `setMembers()` or `addMember()` (see below).
+- If the member's node has a `data-focus-group-text` attribute, that value will serve as the member's text.
+- If neither of the above is provided, the member's text will be the `textContent` of its node.
+
 ## API
 
 ### var focusGroup = createFocusGroup([options])
 
-This is the function you get when you `require()` the module (or `import`).
+This is the function you get when you `require()` or `import` the module.
 
 ```js
 var createFocusGroup = require('focus-group');
@@ -28,15 +44,33 @@ var myMegaMenuFocusGroup = createFocusGroup();
 
 #### Options
 
-**nodes** { Array of DOM nodes }: Nodes for the group. You can omit this option and add nodes later with `addNode()` or `setNodes()`. Default: `[]`.
+**members** { Array }: Designate initial members of the group. Can be any of the following:
 
-**forwardArrows** { Array of `'up'`, `'down'`, `'left'`, or `'right'` }: Specify which arrows should move the focus *forward* through the group (e.g. from index 2 to index 3). Default: `[ 'down' ]`
+- An array of DOM nodes (or a NodeList, like what's returned by `querySelectorAll()`)
+- An array of member objects, each object with the following properties: `node` (the DOM node),
+  and (optionally) `text` (the text that should be associated with that node for letter-navigation)
 
-**backArrows** { Array of `'up'`, `'down'`, `'left'`, or `'right'` }: Specify which arrows should move the focus *back* through the group (e.g. from index 4 to index 3). Default: `[ 'up' ]`
+You can omit this option and add members later with `addMember()` or `setMembers()`. Default: `[]`.
 
-**wrap** { Boolean }: If `true`, when the arrow keys are moving focus they will wrap around the group. That is, when focus is on the last item and you move focus forward, the first item will focus; and when focus is on the first item and you move focus back, the last item will focus.
+**forwardArrows** { Array of `'up'`, `'down'`, `'left'`, or `'right'` }:
+Specify which arrows should move the focus *forward* through the group (e.g. from index 2 to index 3).
+Default: `[ 'down' ]`
 
-**letterNavigation** { Boolean }: If `true`, letter navigation is enabled (see below). Default: `false`.
+**backArrows** { Array of `'up'`, `'down'`, `'left'`, or `'right'` }:
+Specify which arrows should move the focus *back* through the group (e.g. from index 4 to index 3).
+Default: `[ 'up' ]`
+
+**wrap** { Boolean }:
+If `true`, when the arrow keys are moving focus they will wrap around the group. That is, when focus is on the last item and you move focus forward, the first item will focus; and when focus is on the first item and you move focus back, the last item will focus.
+
+**stringSearch** { Boolean }:
+If `true`, string searching is enabled (see below).
+Default: `false`.
+
+**stringSearchDelay** { Number }:
+The number of milliseconds that should elapse between the user's last letter entry (with the keyboard)
+and a refresh of the search (see below).
+Default: `800`.
 
 ### focusGroup.activate()
 
@@ -52,57 +86,103 @@ Stop listening to keyboard events.
 
 Returns the focus group instance.
 
-### focusGroup.addNode(node)
+### focusGroup.addMember(member[, index])
 
-Adds a node to the end of the group.
+Add a member to the group.
 
-Returns the focus group instance.
+`member` can be any of the following:
 
-### focusGroup.removeNode(node)
+- A DOM node
+- An object with the follwing properties: `node` (the node itself), and (optionally) `text` (text that should be associated with that node for letter-navigation).
 
-Remove a node from the group.
-
-Returns the focus group instance.
-
-### focusGroup.clearNodes()
-
-Empty the focus group of nodes.
+If `index` is provided, the member will be added at that index.
+Otherwise, it will be added to the end of the group.
 
 Returns the focus group instance.
 
-### focusGroup.setNodes(nodes)
+### focusGroup.removeMember(member)
 
-Set an array of nodes to be the focus group's constituents.
+Remove a member from the group.
+
+`member` can be any of the following:
+
+- A DOM node
+- An index for the member that should be removed.
 
 Returns the focus group instance.
 
-### focusGroup.getNodes()
+### focusGroup.clearMembers()
 
-Returns the focus group's current node array.
+Empty the focus group of members.
+
+Returns the focus group instance.
+
+### focusGroup.setMembers(members)
+
+Set the focus group's members (clearing any that already exist).
+
+`members` can be any of the following:
+
+- An array of DOM nodes (or a NodeList, like what's returned by `querySelectorAll()`)
+- An array of member objects, each object with two properties: `node` (the node itself),
+  and (optionally) `text` (the text that should be associated with that node for letter-navigation)
+
+Returns the focus group instance.
+
+### focusGroup.getMembers()
+
+Returns the focus group's current array of members.
+
+Each item in the array is an object with `node` and `text` properties.
 
 ### focusGroup.focusNodeAtIndex(index)
 
-Focuses the node at a particular index in the focus group's node array.
+Focuses the node at a particular index in the focus group's member array.
 
-If no node exists at that index, does nothing.
+If no member exists at that index, does nothing.
 
 Returns the focus group instance.
 
 ### focusGroup.moveFocusForward()
 
-Moves the focus forward one node, if focus is already within the group.
+Moves the focus forward one member, if focus is already within the group.
 
 If focus is not within the group, does nothing.
 
-Returns the index of the newly focused node.
+Returns the index of the newly focused member.
 
 ### focusGroup.moveFocusBack()
 
-Moves the focus back one node, if focus is already within the group.
+Moves the focus back one member, if focus is already within the group.
 
 If focus is not within the group, does nothing.
 
-Returns the index of the newly focused node.
+Returns the index of the newly focused member.
+
+## Keyboard Interactions
+
+When focus is inside the focus-group, the following things should happen:
+
+- If you press one of your `forwardArrows` (the down arrow by default), focus moves
+  from the currently focused member to the next member in the group (or wraps back
+  to the front, according to the `wrap` option).
+- If you press one of your `backArrows` (the up arrow by default), focus moves
+  from the currently focused member to the previous member in the group (or wraps around
+  to the back, according to the `wrap` option).
+- If you press a letter key, string searching begins (see below)!.
+
+### String searching
+
+If the option `stringSearch` is `true` and focus is within the group, the following things happen:
+
+- When you start typing, focus moves to the first member whose registered text begins with
+  whatever you've been typing.
+- As long as each keystroke occurs within `stringSearchDelay` (default `800ms`),
+  the search string will accumulate extend (e.g. `f` -> `fa` -> `far` -> `fart`) and focus will move
+  accordingly.
+- If no text matches the search string, focus will not move.
+- After you have not typed any letters for `stringSearchDelay` (default `800ms`), the search
+  string clears and you can start over (e.g. you type `fa` then wait and type `go` to match `gorge`).
 
 ## Contributing
 
