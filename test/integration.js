@@ -137,21 +137,34 @@ describe('letterNavigation: true', function() {
     }).activate();
   });
 
-  // it('letter moves to next node with that letter, cycling', function() {
-  //   nodeOne.focus();
-  //   simulateKeydown({ keyCode: 79 }); // "o"
-  //   assertActiveElement(nodeOne);
-  //   simulateKeydown({ keyCode: 84 }); // "t"
-  //   assertActiveElement(nodeTwo);
-  //   simulateKeydown({ keyCode: 84 }); // "t"
-  //   assertActiveElement(nodeThree);
-  //   simulateKeydown({ keyCode: 84 }); // "t"
-  //   assertActiveElement(nodeTwo);
-  //   simulateKeydown({ keyCode: 79 }); // "o"
-  //   assertActiveElement(nodeOne);
-  //   simulateKeydown({ keyCode: 70 }); // "f"
-  //   assertActiveElement(nodeOne);
-  // });
+  it('letter moves to next node with that letter, cycling', function(done) {
+    nodeOne.focus();
+    after(0, function() {
+      simulateKeydown({ keyCode: 79 }); // "o"
+      assertActiveElement(nodeOne);
+    })
+    .then(after(300, function() {
+      simulateKeydown({ keyCode: 84 }); // "t"
+      assertActiveElement(nodeOne, '300ms continues old search');
+    }))
+    .then(after(805, function() {
+      simulateKeydown({ keyCode: 84 }); // "t"
+      assertActiveElement(nodeTwo, '805ms starts new search');
+    }))
+    .then(after(10, function() {
+      simulateKeydown({ keyCode: 72 }); // "h"
+      assertActiveElement(nodeThree, 'another key after 10ms extends search');
+    }))
+    .then(after(10, function() {
+      simulateKeydown({ keyCode: 79 }); // "o"
+      assertActiveElement(nodeThree, 'another key that produces an irrelevant search does not move focus');
+    }))
+    .then(after(805, function() {
+      simulateKeydown({ keyCode: 84 }); // "t"
+      assertActiveElement(nodeTwo, 'after another 805ms the search has reset');
+    }))
+    .then(done);
+  });
 
   it('non-letters do nothing', function() {
     nodeOne.focus();
@@ -298,10 +311,19 @@ describe('focusNodeAtIndex', function() {
   });
 });
 
-function assertActiveElement(node) {
-  assert.equal(document.activeElement, node);
+function assertActiveElement(node, message) {
+  assert.equal(document.activeElement, node, message);
 }
 
 function simulateKeydown(mockEvent) {
   simulant.fire(document, 'keydown', mockEvent);
+}
+
+function after(time, fn) {
+  return new Promise(function(resolve) {
+    setTimeout(function() {
+      fn();
+      resolve();
+    }, time);
+  });
 }
