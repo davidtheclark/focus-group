@@ -32,6 +32,7 @@
   "devDependencies": {
     "browserify": "13.0.0",
     "browserify-istanbul": "0.2.1",
+    "d3-queue": "2.0.2",
     "http-server": "0.8.5",
     "karma": "0.13.19",
     "karma-browserify": "5.0.1",

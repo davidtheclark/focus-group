@@ -1,5 +1,6 @@
 var assert = require('power-assert');
 var simulant = require('simulant');
+var queue = require('d3-queue').queue;
 var createFocusGroup = require('..');
 
 var arrowUpEvent = { keyCode: 38 };
@@ -139,31 +140,32 @@ describe('letterNavigation: true', function() {
 
   it('letter moves to next node with that letter, cycling', function(done) {
     nodeOne.focus();
-    after(0, function() {
+    var q = queue(1);
+    q.defer(after, 0, function() {
       simulateKeydown({ keyCode: 79 }); // "o"
       assertActiveElement(nodeOne);
-    })
-    .then(after(300, function() {
+    });
+    q.defer(after, 300, function() {
       simulateKeydown({ keyCode: 84 }); // "t"
       assertActiveElement(nodeOne, '300ms continues old search');
-    }))
-    .then(after(805, function() {
+    });
+    q.defer(after, 805, function() {
       simulateKeydown({ keyCode: 84 }); // "t"
       assertActiveElement(nodeTwo, '805ms starts new search');
-    }))
-    .then(after(10, function() {
+    });
+    q.defer(after, 10, function() {
       simulateKeydown({ keyCode: 72 }); // "h"
       assertActiveElement(nodeThree, 'another key after 10ms extends search');
-    }))
-    .then(after(10, function() {
+    });
+    q.defer(after, 10, function() {
       simulateKeydown({ keyCode: 79 }); // "o"
       assertActiveElement(nodeThree, 'another key that produces an irrelevant search does not move focus');
-    }))
-    .then(after(805, function() {
+    });
+    q.defer(after, 805, function() {
       simulateKeydown({ keyCode: 84 }); // "t"
       assertActiveElement(nodeTwo, 'after another 805ms the search has reset');
-    }))
-    .then(done);
+    });
+    q.awaitAll(done);
   });
 
   it('non-letters do nothing', function() {
@@ -319,11 +321,9 @@ function simulateKeydown(mockEvent) {
   simulant.fire(document, 'keydown', mockEvent);
 }
 
-function after(time, fn) {
-  return new Promise(function(resolve) {
-    setTimeout(function() {
-      fn();
-      resolve();
-    }, time);
-  });
+function after(time, fn, done) {
+  setTimeout(function() {
+    fn();
+    done();
+  }, time);
 }
