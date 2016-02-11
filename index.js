@@ -140,13 +140,17 @@ FocusGroup.prototype._runStringSearch = function() {
   }
 }
 
-FocusGroup.prototype._getActiveNodeIndex = function() {
+FocusGroup.prototype._findIndexOfNode = function(searchNode) {
   for (var i = 0, l = this._nodeReps.length; i < l; i++) {
-    if (this._nodeReps[i].node === document.activeElement) {
+    if (this._nodeReps[i].node === searchNode) {
       return i;
     }
   }
   return -1;
+}
+
+FocusGroup.prototype._getActiveNodeIndex = function() {
+  return this._findIndexOfNode(document.activeElement);
 };
 
 FocusGroup.prototype.focusNodeAtIndex = function(index) {
@@ -159,14 +163,13 @@ FocusGroup.prototype.addNode = function(input) {
   var node;
   var nodeText;
   if (input.node && input.text) {
-    node = input.node;
+    node = this._checkNode(input.node);
     nodeText = input.text;
   } else {
-    node = input;
+    node = this._checkNode(input);
     nodeText = node.getAttribute('data-focus-group-text') || node.textContent || '';
   }
 
-  this._checkNode(node);
   var cleanedNodeText = nodeText.replace(/\s/g, '').toLowerCase();
 
   this._nodeReps.push({
@@ -177,7 +180,7 @@ FocusGroup.prototype.addNode = function(input) {
 };
 
 FocusGroup.prototype.removeNode = function(node) {
-  var nodeIndex = this._nodeReps.indexOf(node);
+  var nodeIndex = this._findIndexOfNode(node);
   if (nodeIndex === -1) return;
   this._nodeReps.splice(nodeIndex, 1);
   return this;
@@ -189,7 +192,9 @@ FocusGroup.prototype.clearNodes = function() {
 };
 
 FocusGroup.prototype.setNodes = function(nextNodes) {
-  nextNodes.forEach(this.addNode, this);
+  for (var i = 0, l = nextNodes.length; i < l; i++) {
+    this.addNode(nextNodes[i]);
+  }
   return this;
 };
 
@@ -201,6 +206,7 @@ FocusGroup.prototype._checkNode = function(node) {
   if (!node.nodeType || node.nodeType !== window.Node.ELEMENT_NODE) {
     throw new Error('focus-group: only DOM nodes allowed');
   }
+  return node;
 };
 
 function getEventArrowKey(event) {
