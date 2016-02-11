@@ -5,17 +5,15 @@ function FocusGroup(options) {
     backArrows: options.backArrows || ['up'],
     letterNavigation: options.letterNavigation,
     wrap: options.wrap,
+    stringSearchDelay: 800,
   };
-  this._nodes = [];
+  this._nodeReps = [];
   if (options.nodes) this.setNodes(options.nodes);
   this._handleKeydownEvent = this.handleKeydownEvent.bind(this);
+  this._searchString = '';
 }
 
 FocusGroup.activeGroup = null;
-
-FocusGroup.prototype._getActiveNodeIndex = function() {
-  return this._nodes.indexOf(document.activeElement);
-}
 
 FocusGroup.prototype.activate = function() {
   if (FocusGroup.activeGroup) FocusGroup.activeGroup.deactivate();
@@ -27,6 +25,7 @@ FocusGroup.prototype.activate = function() {
 FocusGroup.prototype.deactivate = function() {
   FocusGroup.activeGroup = null;
   document.removeEventListener('keydown', this._handleKeydownEvent, true);
+  this._clearSearchStringRefreshTimer();
   return this;
 };
 
@@ -39,7 +38,7 @@ FocusGroup.prototype.handleKeydownEvent = function(event) {
   var arrow = getEventArrowKey(event);
 
   if (!arrow) {
-    this._moveFocusByLetter(event);
+    this._handleNonArrowKey(event);
     return;
   }
 
@@ -59,7 +58,7 @@ FocusGroup.prototype.handleKeydownEvent = function(event) {
 FocusGroup.prototype.moveFocusForward = function() {
   var activeNodeIndex = this._getActiveNodeIndex();
   var targetNodeIndex;
-  if (activeNodeIndex < this._nodes.length - 1) {
+  if (activeNodeIndex < this._nodeReps.length - 1) {
     targetNodeIndex = activeNodeIndex + 1;
   } else if (this._settings.wrap) {
     targetNodeIndex = 0;
@@ -76,7 +75,7 @@ FocusGroup.prototype.moveFocusBack = function() {
   if (activeNodeIndex > 0) {
     targetNodeIndex = activeNodeIndex - 1;
   } else if (this._settings.wrap) {
-    targetNodeIndex = this._nodes.length - 1;
+    targetNodeIndex = this._nodeReps.length - 1;
   } else {
     targetNodeIndex = activeNodeIndex;
   }
@@ -84,7 +83,15 @@ FocusGroup.prototype.moveFocusBack = function() {
   return targetNodeIndex;
 };
 
-FocusGroup.prototype._moveFocusByLetter = function(event) {
+FocusGroup.prototype._handleNonArrowKey = function(event) {
+  if (!this._settings.letterNavigation) return;
+
+  // While a string search is underway, ignore spaces and prevent their default
+  if (this._searchString !== '' && (event.key === ' ' || event.keyCode === 32)) {
+    event.preventDefault();
+    return -1;
+  }
+
   if (!isLetterKeyCode(event.keyCode)) return -1;
 
   // If the letter key is part of a key combo,
@@ -93,66 +100,106 @@ FocusGroup.prototype._moveFocusByLetter = function(event) {
 
   event.preventDefault();
 
-  var letter = String.fromCharCode(event.keyCode);
-  var activeNodeIndex = this._getActiveNodeIndex() || 0;
+  this._addToSearchString(String.fromCharCode(event.keyCode));
+  this._runStringSearch();
+};
 
-  // An array of this group's nodes that starts
-  // with the active one and loops through
-  // the end back around
-  var ouroborosNodes = this._nodes
-    .slice(activeNodeIndex + 1)
-    .concat(this._nodes.slice(0, activeNodeIndex + 1));
+FocusGroup.prototype._clearSearchString = function() {
+  this._searchString = '';
+};
 
-  var node, nodeText, i, l;
-  for (i = 0, l = ouroborosNodes.length; i < l; i++) {
-    node = ouroborosNodes[i];
-    nodeText = node.getAttribute('data-focus-group-text') || node.textContent;
+FocusGroup.prototype._addToSearchString = function(letter) {
+  // Always store the lowercase version of the letter
+  this._searchString += letter.toLowerCase();
+};
 
-    if (!nodeText) continue;
+FocusGroup.prototype._startSearchStringRefreshTimer = function() {
+  var self = this;
+  this._clearSearchStringRefreshTimer();
+  this._stringSearchTimer = setTimeout(function() {
+    self._clearSearchString();
+  }, this._settings.stringSearchDelay);
+};
 
-    if (nodeText.charAt(0).toLowerCase() === letter.toLowerCase()) {
-      focusNode(node);
-      return this._nodes.indexOf(node);
+FocusGroup.prototype._clearSearchStringRefreshTimer = function() {
+  if (this._stringSearchTimer) {
+    clearTimeout(this._stringSearchTimer);
+  }
+}
+
+FocusGroup.prototype._runStringSearch = function() {
+  this._startSearchStringRefreshTimer();
+  var nodeRep, nodeText;
+  for (var i = 0, l = this._nodeReps.length; i < l; i++) {
+    nodeRep = this._nodeReps[i];
+    if (!nodeRep.text) continue;
+
+    if (nodeRep.text.indexOf(this._searchString) === 0) {
+      return focusNode(nodeRep.node);
     }
   }
+}
+
+FocusGroup.prototype._getActiveNodeIndex = function() {
+  for (var i = 0, l = this._nodeReps.length; i < l; i++) {
+    if (this._nodeReps[i].node === document.activeElement) {
+      return i;
+    }
+  }
+  return -1;
 };
 
 FocusGroup.prototype.focusNodeAtIndex = function(index) {
-  focusNode(this._nodes[index]);
+  var nodeRep = this._nodeReps[index];
+  if (nodeRep) focusNode(nodeRep.node);
   return this;
 };
 
-FocusGroup.prototype.addNode = function(node) {
+FocusGroup.prototype.addNode = function(input) {
+  var node;
+  var nodeText;
+  if (input.node && input.text) {
+    node = input.node;
+    nodeText = input.text;
+  } else {
+    node = input;
+    nodeText = node.getAttribute('data-focus-group-text') || node.textContent || '';
+  }
+
   this._checkNode(node);
-  this._nodes.push(node);
+  var cleanedNodeText = nodeText.replace(/\s/g, '').toLowerCase();
+
+  this._nodeReps.push({
+    node: node,
+    text: cleanedNodeText,
+  });
   return this;
 };
 
 FocusGroup.prototype.removeNode = function(node) {
-  var nodeIndex = this._nodes.indexOf(node);
+  var nodeIndex = this._nodeReps.indexOf(node);
   if (nodeIndex === -1) return;
-  this._nodes.splice(nodeIndex, 1);
+  this._nodeReps.splice(nodeIndex, 1);
   return this;
 };
 
 FocusGroup.prototype.clearNodes = function() {
-  this._nodes = [];
+  this._nodeReps = [];
   return this;
 };
 
 FocusGroup.prototype.setNodes = function(nextNodes) {
-  nextNodes.forEach(this._checkNode);
-  this._nodes = nextNodes;
+  nextNodes.forEach(this.addNode, this);
   return this;
 };
 
 FocusGroup.prototype.getNodes = function() {
-  return this._nodes;
+  return this._nodeReps;
 };
 
 FocusGroup.prototype._checkNode = function(node) {
   if (!node.nodeType || node.nodeType !== window.Node.ELEMENT_NODE) {
-    throw new Error('focus-group: attempted to add non-element node to group');
+    throw new Error('focus-group: only DOM nodes allowed');
   }
 };
 
@@ -169,7 +216,9 @@ function isLetterKeyCode(keyCode) {
 }
 
 function focusNode(node) {
-  if (node && node.focus) node.focus();
+  if (!node || !node.focus) return;
+  node.focus();
+  if (node.tagName.toLowerCase() === 'input') node.select();
 }
 
 module.exports = function createFocusGroup(options) {
