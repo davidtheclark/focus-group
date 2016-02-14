@@ -17,8 +17,3 @@ a:focus,
 button:focus {
   outline: 5px solid lightblue;
 }
-
-.state {
-  padding-top: 0.3em;
-  padding-bottom: 0.3em;
-}

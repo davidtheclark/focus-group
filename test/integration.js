@@ -23,9 +23,13 @@ document.body.appendChild(nodeFour);
 
 describe('default settings', function() {
   beforeEach(function() {
-    createFocusGroup({
+    this.focusGroup = createFocusGroup({
       members: [nodeOne, nodeTwo, nodeThree],
     }).activate();
+  });
+
+  afterEach(function() {
+    this.focusGroup.deactivate();
   });
 
   it('with focus outside the group, arrow and letter keys do not affect focus', function() {
@@ -81,11 +85,15 @@ describe('default settings', function() {
 
 describe('all arrows designated', function() {
   beforeEach(function() {
-    createFocusGroup({
+    this.focusGroup = createFocusGroup({
       members: [nodeOne, nodeTwo, nodeThree],
       forwardArrows: ['up', 'left'],
       backArrows: ['down', 'right'],
     }).activate();
+  });
+
+  afterEach(function() {
+    this.focusGroup.deactivate();
   });
 
   it('up and left arrows move focus forward', function() {
@@ -107,10 +115,14 @@ describe('all arrows designated', function() {
 
 describe('wrap: true', function() {
   beforeEach(function() {
-    createFocusGroup({
+    this.focusGroup = createFocusGroup({
       members: [nodeOne, nodeTwo, nodeThree],
       wrap: true,
     }).activate();
+  });
+
+  afterEach(function() {
+    this.focusGroup.deactivate();
   });
 
   it('down arrow wraps forward', function() {
@@ -130,42 +142,88 @@ describe('wrap: true', function() {
   });
 });
 
-describe('stringSearch: true', function() {
-  beforeEach(function() {
-    createFocusGroup({
+describe('stringSearch: true', function(sectionDone) {
+  before(function() {
+    this.focusGroup = createFocusGroup({
       members: [nodeOne, nodeTwo, nodeThree, nodeFour],
       stringSearch: true,
     }).activate();
   });
 
-  it('letter moves to next node with that letter', function(done) {
-    nodeOne.focus();
-    var q = queue(1);
-    q.defer(after, 0, function() {
+  after(function() {
+    this.focusGroup.deactivate();
+  });
+
+  var q = queue(1);
+  q.defer(function(next) {
+    nodeThree.focus();
+    it('moves on first keystroke', function() {
       simulateKeydown({ keyCode: 79 }); // "o"
       assertActiveElement(nodeOne);
     });
-    q.defer(after, 300, function() {
-      simulateKeydown({ keyCode: 84 }); // "t"
-      assertActiveElement(nodeOne, '300ms continues old search');
-    });
-    q.defer(after, 805, function() {
-      simulateKeydown({ keyCode: 84 }); // "t"
-      assertActiveElement(nodeTwo, '805ms starts new search');
-    });
-    q.defer(after, 10, function() {
-      simulateKeydown({ keyCode: 72 }); // "h"
-      assertActiveElement(nodeThree, 'another key after 10ms extends search');
-    });
-    q.defer(after, 10, function() {
-      simulateKeydown({ keyCode: 79 }); // "o"
-      assertActiveElement(nodeThree, 'another key that produces an irrelevant search does not move focus');
-    });
-    q.defer(after, 805, function() {
-      simulateKeydown({ keyCode: 84 }); // "t"
-      assertActiveElement(nodeTwo, 'after another 805ms the search has reset');
-    });
-    q.awaitAll(done);
+    next();
+  });
+  q.defer(function(next) {
+    setTimeout(function() {
+      it('300ms continues old search', function() {
+        simulateKeydown({ keyCode: 84 }); // "t"
+        assertActiveElement(nodeOne);
+      });
+      next();
+    }, 300);
+  });
+  q.defer(function(next) {
+    setTimeout(function() {
+      it('805ms starts new search', function() {
+        simulateKeydown({ keyCode: 84 }); // "t"
+        assertActiveElement(nodeTwo);
+      });
+      next();
+    }, 805);
+  });
+  q.defer(function(next) {
+    setTimeout(function() {
+      it('another key after 10ms extends search', function() {
+        simulateKeydown({ keyCode: 72 }); // "h"
+        assertActiveElement(nodeThree);
+      });
+      next();
+    }, 10);
+  });
+  q.defer(function(next) {
+    setTimeout(function() {
+      it('another key that produces an irrelevant search does not move focus', function() {
+        simulateKeydown({ keyCode: 79 }); // "o"
+        assertActiveElement(nodeThree);
+      });
+      next();
+    }, 10);
+  });
+  q.defer(function(next) {
+    setTimeout(function() {
+      it('after another 805ms the search has reset', function() {
+        simulateKeydown({ keyCode: 84 }); // "t"
+        assertActiveElement(nodeTwo);
+      });
+      next();
+    }, 805);
+  });
+  q.awaitAll(function(err) {
+    if (err) throw err;
+    done();
+  });
+})
+
+describe('stringSearch: true but no search happens', function() {
+  beforeEach(function() {
+    this.focusGroup = createFocusGroup({
+      members: [nodeOne, nodeTwo, nodeThree, nodeFour],
+      stringSearch: true,
+    }).activate();
+  });
+
+  afterEach(function() {
+    this.focusGroup.deactivate();
   });
 
   it('non-letters do nothing', function() {
@@ -192,6 +250,10 @@ describe('deactivate()', function() {
     this.focusGroup = createFocusGroup({ members: [nodeOne, nodeTwo, nodeThree] }).activate()
   });
 
+  afterEach(function() {
+    this.focusGroup.deactivate();
+  });
+
   it('does not respond after deactivation', function() {
     this.focusGroup.deactivate()
     nodeOne.focus();
@@ -205,6 +267,10 @@ describe('deactivate()', function() {
 describe('dynamically adding and removing nodes', function() {
   beforeEach(function() {
     this.focusGroup = createFocusGroup().activate();
+  });
+
+  afterEach(function() {
+    this.focusGroup.deactivate();
   });
 
   it('does nothing without nodes', function() {
@@ -241,8 +307,55 @@ describe('dynamically adding and removing nodes', function() {
     assertActiveElement(nodeFour);
   });
 
-  it('works while adding and removing nodes at whim', function() {
+  it('adds a member at an index with addMember(node, index)', function() {
+    this.focusGroup.setMembers([nodeThree, nodeFour]);
+    this.focusGroup.addMember(nodeTwo, 1);
+    assert.deepEqual(this.focusGroup.getMembers(), [
+      { node: nodeThree, text: 'three' },
+      { node: nodeTwo, text: 'two' },
+      { node: nodeFour, text: "" },
+    ]);
+  });
+
+  it('removes a member with removeMember(node)', function() {
+    this.focusGroup.setMembers([nodeThree, nodeFour]);
+    this.focusGroup.removeMember(nodeThree);
+    assert.deepEqual(this.focusGroup.getMembers(), [
+      { node: nodeFour, text: "" },
+    ]);
+  });
+
+  it('removes a member with removeMember(index)', function() {
+    this.focusGroup.setMembers([nodeThree, nodeFour]);
+    this.focusGroup.removeMember(1);
+    assert.deepEqual(this.focusGroup.getMembers(), [
+      { node: nodeThree, text: 'three' },
+    ]);
+  });
+
+  it('does nothing when you remove a member that does not exist', function() {
+    this.focusGroup.setMembers([nodeThree]);
+    this.focusGroup.removeMember(nodeOne);
+    assert.deepEqual(this.focusGroup.getMembers(), [
+      { node: nodeThree, text: "three" },
+    ]);
+  });
+});
+
+describe('works while adding and removing nodes at whim', function() {
+  before(function() {
+    this.focusGroup = createFocusGroup().activate()
+  });
+
+  after(function() {
+    this.focusGroup.deactivate();
+  });
+
+  it('starts with an empty group', function() {
     assert.deepEqual(this.focusGroup.getMembers(), []);
+  });
+
+  it('adds members with setMembers()', function() {
     this.focusGroup.setMembers([nodeOne, nodeTwo, nodeThree, nodeFour]);
     assert.deepEqual(this.focusGroup.getMembers(), [
       { node: nodeOne, text: 'one' },
@@ -250,35 +363,31 @@ describe('dynamically adding and removing nodes', function() {
       { node: nodeThree, text: 'three' },
       { node: nodeFour, text: '' },
     ]);
+  });
 
+  it('removes a member with removeMember(node)', function() {
     this.focusGroup.removeMember(nodeTwo);
     assert.deepEqual(this.focusGroup.getMembers(), [
       { node: nodeOne, text: 'one' },
       { node: nodeThree, text: 'three' },
       { node: nodeFour, text: '' },
     ]);
+  });
+
+  it('still registers proper focus movement', function() {
     nodeOne.focus();
     simulateKeydown(arrowDownEvent);
     assertActiveElement(nodeThree);
+  });
 
+  it('clears members with clearMembers()', function() {
     this.focusGroup.clearMembers();
     assert.deepEqual(this.focusGroup.getMembers(), []);
+  });
+
+  it('still registers proper focus movement', function() {
     simulateKeydown(arrowDownEvent);
     assertActiveElement(nodeThree);
-
-    this.focusGroup.setMembers([nodeThree, nodeOne]);
-    assert.deepEqual(this.focusGroup.getMembers(), [
-      { node: nodeThree, text: 'three' },
-      { node: nodeOne, text: 'one' },
-    ]);
-    // Remove node that isn't a part of the group, does nothing
-    this.focusGroup.removeMember(nodeFour);
-    assert.deepEqual(this.focusGroup.getMembers(), [
-      { node: nodeThree, text: 'three' },
-      { node: nodeOne, text: 'one' },
-    ]);
-    simulateKeydown(arrowDownEvent);
-    assertActiveElement(nodeOne);
   });
 });
 
@@ -294,6 +403,10 @@ describe('focusNodeAtIndex', function() {
   beforeEach(function() {
     this.focusGroup = createFocusGroup({ members: [nodeOne, nodeTwo, nodeThree, nodeFour] })
       .activate();
+  });
+
+  afterEach(function() {
+    this.focusGroup.deactivate();
   });
 
   it('works', function() {
@@ -319,11 +432,4 @@ function assertActiveElement(node, message) {
 
 function simulateKeydown(mockEvent) {
   simulant.fire(document, 'keydown', mockEvent);
-}
-
-function after(time, fn, done) {
-  setTimeout(function() {
-    fn();
-    done();
-  }, time);
 }

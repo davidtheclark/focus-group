@@ -24,12 +24,39 @@ A focus-group is composed of members.
 The order of the members matters, because focus moves forwards and backwards through the group, in order.
 
 Each member consists of a DOM node and some text associated with that node.
-The member's text will be used for keyboard navigation.
+The member's text will be used for letter-key jumping (a.k.a. string searching).
 Each member's text can be established in a few ways:
 
 - It can be manually specified when adding the member to the group, via `setMembers()` or `addMember()` (see below).
 - If the member's node has a `data-focus-group-text` attribute, that value will serve as the member's text.
 - If neither of the above is provided, the member's text will be the `textContent` of its node.
+
+## Keyboard Interactions
+
+When focus is inside the focus-group, the following things should happen:
+
+- If you press one of your `forwardArrows` (the down arrow by default), focus moves
+  from the currently focused member to the next member in the group (or wraps back
+  to the front, according to the `wrap` option).
+- If you press one of your `backArrows` (the up arrow by default), focus moves
+  from the currently focused member to the previous member in the group (or wraps around
+  to the back, according to the `wrap` option).
+- If you press a letter key, string searching begins (see below!).
+
+### String searching
+
+If the option `stringSearch` is `true` and focus is within the group, the following things happen:
+
+- When you start typing, focus moves to the first member whose registered text begins with
+  whatever you've been typing.
+- As long as each keystroke occurs within `stringSearchDelay`,
+  the search string will extend (e.g. `f` -> `fa` -> `far` -> `farm`) and focus will move
+  accordingly.
+- If no text matches the search string, focus will not move.
+- After you have not typed any letters for `stringSearchDelay`, the search
+  string resets and you can start over (e.g. you type `fa` then wait and type `go` to match `gorge`).
+
+This all mimics the native `<select>` behavior.
 
 ## API
 
@@ -69,20 +96,18 @@ Default: `false`.
 
 **stringSearchDelay** { Number }:
 The number of milliseconds that should elapse between the user's last letter entry (with the keyboard)
-and a refresh of the search (see below).
+and a refresh of the string search (see below).
 Default: `800`.
 
 ### focusGroup.activate()
 
-Begin listening to keyboard events and responding accordingly.
-
-If another focus group is already active, that prior group will be deactivated before the new group is activated. It only makes sense to have one active focus group at a time.
+Start this group listening to keyboard events and responding accordingly.
 
 Returns the focus group instance.
 
 ### focusGroup.deactivate()
 
-Stop listening to keyboard events.
+Stop this group listening to keyboard events.
 
 Returns the focus group instance.
 
@@ -93,7 +118,9 @@ Add a member to the group.
 `member` can be any of the following:
 
 - A DOM node
-- An object with the follwing properties: `node` (the node itself), and (optionally) `text` (text that should be associated with that node for letter-navigation).
+- An object with the following properties:
+  - `node` (the node itself)
+  - (optionally) `text`: Text that should be associated with that node for letter-navigation. If none is provided, focus-group will check for a `data-focus-group-text` attribute or fallback to the node's `textContent.`
 
 If `index` is provided, the member will be added at that index.
 Otherwise, it will be added to the end of the group.
@@ -124,8 +151,9 @@ Set the focus group's members (clearing any that already exist).
 `members` can be any of the following:
 
 - An array of DOM nodes (or a NodeList, like what's returned by `querySelectorAll()`)
-- An array of member objects, each object with two properties: `node` (the node itself),
-  and (optionally) `text` (the text that should be associated with that node for letter-navigation)
+- An array of member objects, each object with the following properties:
+  - `node` (the node itself)
+  - (optionally) `text`: Text that should be associated with that node for letter-navigation. If none is provided, focus-group will check for a `data-focus-group-text` attribute or fallback to the node's `textContent.
 
 Returns the focus group instance.
 
@@ -159,30 +187,7 @@ If focus is not within the group, does nothing.
 
 Returns the index of the newly focused member.
 
-## Keyboard Interactions
-
-When focus is inside the focus-group, the following things should happen:
-
-- If you press one of your `forwardArrows` (the down arrow by default), focus moves
-  from the currently focused member to the next member in the group (or wraps back
-  to the front, according to the `wrap` option).
-- If you press one of your `backArrows` (the up arrow by default), focus moves
-  from the currently focused member to the previous member in the group (or wraps around
-  to the back, according to the `wrap` option).
-- If you press a letter key, string searching begins (see below)!.
-
-### String searching
-
-If the option `stringSearch` is `true` and focus is within the group, the following things happen:
-
-- When you start typing, focus moves to the first member whose registered text begins with
-  whatever you've been typing.
-- As long as each keystroke occurs within `stringSearchDelay` (default `800ms`),
-  the search string will accumulate extend (e.g. `f` -> `fa` -> `far` -> `fart`) and focus will move
-  accordingly.
-- If no text matches the search string, focus will not move.
-- After you have not typed any letters for `stringSearchDelay` (default `800ms`), the search
-  string clears and you can start over (e.g. you type `fa` then wait and type `go` to match `gorge`).
+Note that like the native `<select>`, typing only matches the *beginning of words*. So you can't focus `David Clark` by typing `Clark`.
 
 ## Contributing
 

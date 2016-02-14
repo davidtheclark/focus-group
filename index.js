@@ -13,24 +13,20 @@ function FocusGroup(options) {
   this._boundHandleKeydownEvent = this._handleKeydownEvent.bind(this);
 }
 
-FocusGroup.activeGroup = null;
-
 FocusGroup.prototype.activate = function() {
-  if (FocusGroup.activeGroup) FocusGroup.activeGroup.deactivate();
-  FocusGroup.activeGroup = this;
+  // Use capture in case other libraries might grab it first -- i.e. React
   document.addEventListener('keydown', this._boundHandleKeydownEvent, true);
   return this;
 };
 
 FocusGroup.prototype.deactivate = function() {
-  FocusGroup.activeGroup = null;
   document.removeEventListener('keydown', this._boundHandleKeydownEvent, true);
   this._clearSearchStringRefreshTimer();
   return this;
 };
 
 FocusGroup.prototype._handleKeydownEvent = function(event) {
-  // We should only respond to keyboard events when
+  // Only respond to keyboard events when
   // focus is already within the focus-group
   var activeElementIndex = this._getActiveElementIndex();
   if (activeElementIndex === -1) return;
@@ -86,12 +82,14 @@ FocusGroup.prototype.moveFocusBack = function() {
 FocusGroup.prototype._handleNonArrowKey = function(event) {
   if (!this._settings.stringSearch) return;
 
-  // While a string search is underway, ignore spaces and prevent their default
+  // While a string search is underway, ignore spaces
+  // and prevent the default space-key behavior
   if (this._searchString !== '' && (event.key === ' ' || event.keyCode === 32)) {
     event.preventDefault();
     return -1;
   }
 
+  // Only respond to letter keys
   if (!isLetterKeyCode(event.keyCode)) return -1;
 
   // If the letter key is part of a key combo,
@@ -127,12 +125,16 @@ FocusGroup.prototype._clearSearchStringRefreshTimer = function() {
 
 FocusGroup.prototype._runStringSearch = function() {
   this._startSearchStringRefreshTimer();
+  this.moveFocusByString(this._searchString);
+}
+
+FocusGroup.prototype.moveFocusByString = function(str) {
   var member;
   for (var i = 0, l = this._members.length; i < l; i++) {
     member = this._members[i];
     if (!member.text) continue;
 
-    if (member.text.indexOf(this._searchString) === 0) {
+    if (member.text.indexOf(str) === 0) {
       return focusNode(member.node);
     }
   }
@@ -168,7 +170,7 @@ FocusGroup.prototype.addMember = function(member, index) {
     nodeText = node.getAttribute('data-focus-group-text') || node.textContent || '';
   }
 
-  var cleanedNodeText = nodeText.replace(/\s/g, '').toLowerCase();
+  var cleanedNodeText = nodeText.replace(/[\W_]/g, '').toLowerCase();
   var member = {
     node: node,
     text: cleanedNodeText,
