@@ -160,15 +160,10 @@ FocusGroup.prototype.focusNodeAtIndex = function(index) {
 };
 
 FocusGroup.prototype.addMember = function(member, index) {
-  var node;
-  var nodeText;
-  if (member.node && member.text) {
-    node = this._checkNode(member.node);
-    nodeText = member.text;
-  } else {
-    node = this._checkNode(member);
-    nodeText = node.getAttribute('data-focus-group-text') || node.textContent || '';
-  }
+  var node = member.node || member;
+  var nodeText = member.text || node.getAttribute('data-focus-group-text') || node.textContent || '';
+
+  this._checkNode(node);
 
   var cleanedNodeText = nodeText.replace(/[\W_]/g, '').toLowerCase();
   var member = {
