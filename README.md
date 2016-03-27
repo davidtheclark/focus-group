@@ -58,6 +58,8 @@ If the option `stringSearch` is `true` and focus is within the group, the follow
 
 This all mimics the native `<select>` behavior.
 
+Note that like the native `<select>`, typing only matches the *beginning of words*. So you can't focus `David Clark` by typing `Clark`.
+
 ## API
 
 ### var focusGroup = createFocusGroup([options])
@@ -186,8 +188,6 @@ Moves the focus back one member, if focus is already within the group.
 If focus is not within the group, does nothing.
 
 Returns the index of the newly focused member.
-
-Note that like the native `<select>`, typing only matches the *beginning of words*. So you can't focus `David Clark` by typing `Clark`.
 
 ## Contributing
 
