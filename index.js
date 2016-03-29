@@ -194,6 +194,7 @@ FocusGroup.prototype.clearMembers = function() {
 };
 
 FocusGroup.prototype.setMembers = function(nextMembers) {
+  this.clearMembers();
   for (var i = 0, l = nextMembers.length; i < l; i++) {
     this.addMember(nextMembers[i]);
   }
