@@ -171,7 +171,7 @@ FocusGroup.prototype.addMember = function(member, index) {
     text: cleanedNodeText,
   };
 
-  if (index) {
+  if (index !== null && index !== undefined) {
     this._members.splice(index, 0, member);
   } else {
     this._members.push(member);

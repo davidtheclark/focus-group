@@ -309,10 +309,12 @@ describe('dynamically adding and removing nodes', function() {
 
   it('adds a member at an index with addMember(node, index)', function() {
     this.focusGroup.setMembers([nodeThree, nodeFour]);
+    this.focusGroup.addMember(nodeOne, 0);
     this.focusGroup.addMember(nodeTwo, 1);
     assert.deepEqual(this.focusGroup.getMembers(), [
-      { node: nodeThree, text: 'three' },
+      { node: nodeOne, text: 'one' },
       { node: nodeTwo, text: 'two' },
+      { node: nodeThree, text: 'three' },
       { node: nodeFour, text: "" },
     ]);
   });
