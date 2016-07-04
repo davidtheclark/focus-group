@@ -1,8 +1,24 @@
+var KEYBINDING_TYPES = [{
+  type: 'next',
+  func: 'moveFocusForward',
+}, {
+  type: 'prev',
+  func: 'moveFocusBack',
+}, {
+  type: 'first',
+  func: 'moveFocusToFirst',
+}, {
+  type: 'last',
+  func: 'moveFocusToLast',
+}];
+
 function FocusGroup(options) {
   options = options || {};
   this._settings = {
-    forwardArrows: options.forwardArrows || ['down'],
-    backArrows: options.backArrows || ['up'],
+    keybindings: options.keybindings || {
+      next: { keyCode: 40 },
+      prev: { keyCode: 38 },
+    },
     wrap: options.wrap,
     stringSearch: options.stringSearch,
     stringSearchDelay: 800,
@@ -11,7 +27,7 @@ function FocusGroup(options) {
   this._members = [];
   if (options.members) this.setMembers(options.members);
   this._boundHandleKeydownEvent = this._handleKeydownEvent.bind(this);
-}
+};
 
 FocusGroup.prototype.activate = function() {
   // Use capture in case other libraries might grab it first -- i.e. React
@@ -31,24 +47,39 @@ FocusGroup.prototype._handleKeydownEvent = function(event) {
   var activeElementIndex = this._getActiveElementIndex();
   if (activeElementIndex === -1) return;
 
-  var arrow = getEventArrowKey(event);
+  var keyCode = event.keyCode
+  var keybindings = this._settings.keybindings
 
-  if (!arrow) {
-    this._handleNonArrowKey(event);
-    return;
+  for (var i = KEYBINDING_TYPES.length; i--;) {
+    var keyType = KEYBINDING_TYPES[i];
+    var keybinding = keybindings[keyType.type];
+
+    if (!keybinding) {
+      return;
+    } else if (keybinding.constructor !== Array) {
+      keybinding = [keybinding]
+    }
+
+    for (var j = keybinding.length; j--;) {
+      var key = keybinding[j]
+      if (keyCode === key.keyCode) {
+        var modifier = key.modifier;
+        if (modifier) {
+          if (event[modifier]) {
+            event.preventDefault();
+            this[keyType.func]();
+            return;
+          }
+        } else {
+          event.preventDefault();
+          this[keyType.func]();
+          return;
+        }
+      }
+    }
   }
 
-  if (this._settings.forwardArrows.indexOf(arrow) !== -1) {
-    event.preventDefault();
-    this.moveFocusForward();
-    return;
-  }
-
-  if (this._settings.backArrows.indexOf(arrow) !== -1) {
-    event.preventDefault();
-    this.moveFocusBack();
-    return;
-  }
+  this._handleNonKeybinding(event);
 };
 
 FocusGroup.prototype.moveFocusForward = function() {
@@ -79,7 +110,15 @@ FocusGroup.prototype.moveFocusBack = function() {
   return targetIndex;
 };
 
-FocusGroup.prototype._handleNonArrowKey = function(event) {
+FocusGroup.prototype.moveFocusToFirst = function() {
+  this.focusNodeAtIndex(0);
+};
+
+FocusGroup.prototype.moveFocusToLast = function() {
+  this.focusNodeAtIndex(this._members.length - 1);
+};
+
+FocusGroup.prototype._handleNonKeybinding = function(event) {
   if (!this._settings.stringSearch) return;
 
   // While a string search is underway, ignore spaces
@@ -121,12 +160,12 @@ FocusGroup.prototype._startSearchStringRefreshTimer = function() {
 
 FocusGroup.prototype._clearSearchStringRefreshTimer = function() {
   clearTimeout(this._stringSearchTimer);
-}
+};
 
 FocusGroup.prototype._runStringSearch = function() {
   this._startSearchStringRefreshTimer();
   this.moveFocusByString(this._searchString);
-}
+};
 
 FocusGroup.prototype.moveFocusByString = function(str) {
   var member;
@@ -138,7 +177,7 @@ FocusGroup.prototype.moveFocusByString = function(str) {
       return focusNode(member.node);
     }
   }
-}
+};
 
 FocusGroup.prototype._findIndexOfNode = function(searchNode) {
   for (var i = 0, l = this._members.length; i < l; i++) {
@@ -147,7 +186,7 @@ FocusGroup.prototype._findIndexOfNode = function(searchNode) {
     }
   }
   return -1;
-}
+};
 
 FocusGroup.prototype._getActiveElementIndex = function() {
   return this._findIndexOfNode(document.activeElement);
@@ -212,23 +251,15 @@ FocusGroup.prototype._checkNode = function(node) {
   return node;
 };
 
-function getEventArrowKey(event) {
-  if (event.key === 'ArrowUp' || event.keyCode === 38) return 'up';
-  if (event.key === 'ArrowDown' || event.keyCode === 40) return 'down';
-  if (event.key === 'ArrowLeft' || event.keyCode === 37) return 'left';
-  if (event.key === 'ArrowRight' || event.keyCode === 39) return 'right';
-  return null;
-}
-
 function isLetterKeyCode(keyCode) {
   return keyCode >= 65 && keyCode <= 90;
-}
+};
 
 function focusNode(node) {
   if (!node || !node.focus) return;
   node.focus();
   if (node.tagName.toLowerCase() === 'input') node.select();
-}
+};
 
 module.exports = function createFocusGroup(options) {
   return new FocusGroup(options);

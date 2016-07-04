@@ -87,8 +87,10 @@ describe('all arrows designated', function() {
   beforeEach(function() {
     this.focusGroup = createFocusGroup({
       members: [nodeOne, nodeTwo, nodeThree],
-      forwardArrows: ['up', 'left'],
-      backArrows: ['down', 'right'],
+      keybindings: {
+        next: [{ keyCode: 39 }, { keyCode: 40 }],
+        prev: [{ keyCode: 37 }, { keyCode: 38 }],
+      },
     }).activate();
   });
 

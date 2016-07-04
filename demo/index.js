@@ -10,7 +10,11 @@ var wraNodes = document.querySelectorAll('.wra');
 createFocusGroup({
 	members: wraNodes,
 	stringSearch: true,
-	forwardArrows: ['right', 'down'],
-	backArrows: ['left', 'up'],
+	keybindings: {
+		next: [{ keyCode: 40 }, { keyCode: 34 }],
+		prev: [{ keyCode: 38 }, { keyCode: 33 }],
+		first: { keyCode: 36, modifier: 'ctrlKey' },
+		last: { keyCode: 35, modifier: 'ctrlKey' }
+	},
 	wrap: true,
 }).activate();
