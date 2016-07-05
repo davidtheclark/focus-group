@@ -88,9 +88,10 @@ describe('all arrows designated', function() {
     this.focusGroup = createFocusGroup({
       members: [nodeOne, nodeTwo, nodeThree],
       keybindings: {
-        next: [{ keyCode: 39 }, { keyCode: 40 }],
-        prev: [{ keyCode: 37 }, { keyCode: 38 }],
+        next: [arrowDownEvent, arrowRightEvent],
+    		prev: [arrowUpEvent, arrowLeftEvent],
       },
+      wrap: true
     }).activate();
   });
 
@@ -101,18 +102,46 @@ describe('all arrows designated', function() {
   it('up and left arrows move focus forward', function() {
     nodeOne.focus();
     simulateKeydown(arrowUpEvent);
-    assertActiveElement(nodeTwo);
-    simulateKeydown(arrowLeftEvent);
     assertActiveElement(nodeThree);
+    simulateKeydown(arrowLeftEvent);
+    assertActiveElement(nodeTwo);
   });
 
-  it('up and left arrows move focus back', function() {
+  it('down and right arrows move focus back', function() {
     nodeThree.focus();
     simulateKeydown(arrowDownEvent);
-    assertActiveElement(nodeTwo);
-    simulateKeydown(arrowRightEvent);
     assertActiveElement(nodeOne);
+    simulateKeydown(arrowRightEvent);
+    assertActiveElement(nodeTwo);
   });
+});
+
+describe('modifier keys', function() {
+  beforeEach(function () {
+    this.focusGroup = createFocusGroup({
+      members: [nodeOne, nodeTwo, nodeThree],
+      keybindings: {
+        first: { keyCode: 36, ctrlKey: true },
+        last: { keyCode: 35, ctrlKey: true },
+      },
+    }).activate();
+  });
+
+  afterEach(function () {
+    this.focusGroup.deactivate();
+  });
+
+  it('move focus to first node when holding control and hitting home key', function() {
+    nodeThree.focus();
+    simulateKeydown({ keyCode: 36, ctrlKey: true });
+    assertActiveElement(nodeOne);
+  })
+
+  it('move focus to last node when holding control and hitting end key', function() {
+    nodeOne.focus();
+    simulateKeydown({ keyCode: 35, ctrlKey: true });
+    assertActiveElement(nodeThree);
+  })
 });
 
 describe('wrap: true', function() {

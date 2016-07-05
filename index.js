@@ -16,13 +16,21 @@ function FocusGroup(options) {
   options = options || {};
   this._settings = {
     keybindings: {
-      next: options.keybindings.next || { keyCode: 40 },
-      prev: options.keybindings.prev || { keyCode: 38 },
+      next: { keyCode: 40 },
+      prev: { keyCode: 38 },
     },
     wrap: options.wrap,
     stringSearch: options.stringSearch,
-    stringSearchDelay: 800,
+    stringSearchDelay: 800
   };
+  // merge user keybindings into default keybindings
+  if (options.keybindings) {
+    for (var prop in options.keybindings) {
+      if (options.keybindings.hasOwnProperty(prop)) {
+        this._settings.keybindings[prop] = options.keybindings[prop]
+      }
+    }
+  }
   this._searchString = '';
   this._members = [];
   if (options.members) this.setMembers(options.members);
@@ -55,26 +63,16 @@ FocusGroup.prototype._handleKeydownEvent = function(event) {
     var keybinding = keybindings[keyType.type];
 
     if (!keybinding) {
-      return;
+      continue;
     } else if (keybinding.constructor !== Array) {
       keybinding = [keybinding]
     }
 
     for (var j = keybinding.length; j--;) {
-      var key = keybinding[j]
-      if (keyCode === key.keyCode) {
-        var modifier = key.modifier;
-        if (modifier) {
-          if (event[modifier]) {
-            event.preventDefault();
-            this[keyType.func]();
-            return;
-          }
-        } else {
-          event.preventDefault();
-          this[keyType.func]();
-          return;
-        }
+      if (isEventEqual(keybinding[j], event)) {
+        event.preventDefault();
+        this[keyType.func]();
+        return;
       }
     }
   }
@@ -250,6 +248,15 @@ FocusGroup.prototype._checkNode = function(node) {
   }
   return node;
 };
+
+function isEventEqual(a, b) {
+  for (var key in a) {
+    if (a.hasOwnProperty(key) && a[key] !== b[key]) {
+      return false;
+    }
+  }
+  return true;
+}
 
 function isLetterKeyCode(keyCode) {
   return keyCode >= 65 && keyCode <= 90;
