@@ -15,9 +15,9 @@ var KEYBINDING_TYPES = [{
 function FocusGroup(options) {
   options = options || {};
   this._settings = {
-    keybindings: options.keybindings || {
-      next: { keyCode: 40 },
-      prev: { keyCode: 38 },
+    keybindings: {
+      next: options.keybindings.next || { keyCode: 40 },
+      prev: options.keybindings.prev || { keyCode: 38 },
     },
     wrap: options.wrap,
     stringSearch: options.stringSearch,
@@ -27,7 +27,7 @@ function FocusGroup(options) {
   this._members = [];
   if (options.members) this.setMembers(options.members);
   this._boundHandleKeydownEvent = this._handleKeydownEvent.bind(this);
-};
+}
 
 FocusGroup.prototype.activate = function() {
   // Use capture in case other libraries might grab it first -- i.e. React
@@ -253,13 +253,13 @@ FocusGroup.prototype._checkNode = function(node) {
 
 function isLetterKeyCode(keyCode) {
   return keyCode >= 65 && keyCode <= 90;
-};
+}
 
 function focusNode(node) {
   if (!node || !node.focus) return;
   node.focus();
   if (node.tagName.toLowerCase() === 'input') node.select();
-};
+}
 
 module.exports = function createFocusGroup(options) {
   return new FocusGroup(options);
