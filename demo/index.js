@@ -13,8 +13,8 @@ createFocusGroup({
 	keybindings: {
 		next: [{ keyCode: 40 }, { keyCode: 39 }],
 		prev: [{ keyCode: 38 }, { keyCode: 37 }],
-		first: { keyCode: 36, ctrlKey: true },
-		last: { keyCode: 35, ctrlKey: true }
+		first: { keyCode: 74, metaKey: true },
+		last: { keyCode: 75, metaKey: true }
 	},
 	wrap: true,
 }).activate();

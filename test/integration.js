@@ -89,7 +89,7 @@ describe('all arrows designated', function() {
       members: [nodeOne, nodeTwo, nodeThree],
       keybindings: {
         next: [arrowDownEvent, arrowRightEvent],
-    		prev: [arrowUpEvent, arrowLeftEvent],
+        prev: [arrowUpEvent, arrowLeftEvent],
       },
       wrap: true
     }).activate();
@@ -173,7 +173,7 @@ describe('wrap: true', function() {
   });
 });
 
-describe('stringSearch: true', function(sectionDone) {
+describe('stringSearch: true', function(done) {
   before(function() {
     this.focusGroup = createFocusGroup({
       members: [nodeOne, nodeTwo, nodeThree, nodeFour],

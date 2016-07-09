@@ -1,36 +1,37 @@
-var KEYBINDING_TYPES = [{
-  type: 'next',
-  func: 'moveFocusForward',
-}, {
-  type: 'prev',
-  func: 'moveFocusBack',
-}, {
-  type: 'first',
-  func: 'moveFocusToFirst',
-}, {
-  type: 'last',
-  func: 'moveFocusToLast',
-}];
-
 function FocusGroup(options) {
   options = options || {};
+  options.keybindings = options.keybindings || {};
   this._settings = {
     keybindings: {
-      next: { keyCode: 40 },
-      prev: { keyCode: 38 },
+      next: (options.keybindings.next) || { keyCode: 40 },
+      prev: (options.keybindings.prev) || { keyCode: 38 },
+      first: options.keybindings.first,
+      last: options.keybindings.last,
     },
     wrap: options.wrap,
     stringSearch: options.stringSearch,
     stringSearchDelay: 800
   };
-  // merge user keybindings into default keybindings
-  if (options.keybindings) {
-    for (var prop in options.keybindings) {
-      if (options.keybindings.hasOwnProperty(prop)) {
-        this._settings.keybindings[prop] = options.keybindings[prop]
-      }
-    }
+
+  // Construct a keybinding lookup that will be more useful later
+  this._keybindingsLookup = [];
+  var action;
+  var eventMatchers
+  for (action in this._settings.keybindings) {
+    eventMatchers = this._settings.keybindings[action];
+    if (!eventMatchers) continue;
+    [].concat(eventMatchers).forEach(function(eventMatcher) {
+      eventMatcher.metaKey = eventMatcher.metaKey || false;
+      eventMatcher.ctrlKey = eventMatcher.ctrlKey || false;
+      eventMatcher.altKey = eventMatcher.altKey || false;
+      eventMatcher.shiftKey = eventMatcher.shiftKey || false;
+      this._keybindingsLookup.push({
+        action: action,
+        eventMatcher: eventMatcher
+      });
+    }.bind(this));
   }
+
   this._searchString = '';
   this._members = [];
   if (options.members) this.setMembers(options.members);
@@ -55,29 +56,32 @@ FocusGroup.prototype._handleKeydownEvent = function(event) {
   var activeElementIndex = this._getActiveElementIndex();
   if (activeElementIndex === -1) return;
 
-  var keyCode = event.keyCode
-  var keybindings = this._settings.keybindings
-
-  for (var i = KEYBINDING_TYPES.length; i--;) {
-    var keyType = KEYBINDING_TYPES[i];
-    var keybinding = keybindings[keyType.type];
-
-    if (!keybinding) {
-      continue;
-    } else if (keybinding.constructor !== Array) {
-      keybinding = [keybinding]
+  // See if the event matches any registered keybinds
+  var eventBound = false;
+  this._keybindingsLookup.forEach(function(keybinding) {
+    if (!matchesEvent(keybinding.eventMatcher, event)) return;
+    eventBound = true;
+    event.preventDefault();
+    switch (keybinding.action) {
+      case 'next':
+        this.moveFocusForward();
+        break;
+      case 'prev':
+        this.moveFocusBack();
+        break;
+      case 'first':
+        this.moveFocusToFirst();
+        break;
+      case 'last':
+        this.moveFocusToLast();
+        break;
+      default: return;
     }
+  }.bind(this));
 
-    for (var j = keybinding.length; j--;) {
-      if (isEventEqual(keybinding[j], event)) {
-        event.preventDefault();
-        this[keyType.func]();
-        return;
-      }
-    }
+  if (!eventBound) {
+    this._handleUnboundKey(event);
   }
-
-  this._handleNonKeybinding(event);
 };
 
 FocusGroup.prototype.moveFocusForward = function() {
@@ -116,7 +120,7 @@ FocusGroup.prototype.moveFocusToLast = function() {
   this.focusNodeAtIndex(this._members.length - 1);
 };
 
-FocusGroup.prototype._handleNonKeybinding = function(event) {
+FocusGroup.prototype._handleUnboundKey = function(event) {
   if (!this._settings.stringSearch) return;
 
   // While a string search is underway, ignore spaces
@@ -196,9 +200,9 @@ FocusGroup.prototype.focusNodeAtIndex = function(index) {
   return this;
 };
 
-FocusGroup.prototype.addMember = function(member, index) {
-  var node = member.node || member;
-  var nodeText = member.text || node.getAttribute('data-focus-group-text') || node.textContent || '';
+FocusGroup.prototype.addMember = function(memberData, index) {
+  var node = memberData.node || memberData;
+  var nodeText = memberData.text || node.getAttribute('data-focus-group-text') || node.textContent || '';
 
   this._checkNode(node);
 
@@ -249,11 +253,9 @@ FocusGroup.prototype._checkNode = function(node) {
   return node;
 };
 
-function isEventEqual(a, b) {
-  for (var key in a) {
-    if (a.hasOwnProperty(key) && a[key] !== b[key]) {
-      return false;
-    }
+function matchesEvent(matcher, event) {
+  for (var key in matcher) {
+    if (event[key] !== undefined && matcher[key] !== event[key]) return false;
   }
   return true;
 }
