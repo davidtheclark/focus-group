@@ -7,7 +7,7 @@ Create a group of nodes with special focus-related powers.
 
 Specifically, you can do the following with your focus group:
 
-- Use arrow keys to move focus through the nodes
+- Use different keybindings to move focus through the nodes
 - Type (with letters) to jump focus to a specific node based on its text
 
 Essentially, it mimics some of the essential keyboard interactions of a native `<select>`.
@@ -35,10 +35,10 @@ Each member's text can be established in a few ways:
 
 When focus is inside the focus-group, the following things should happen:
 
-- If you press one of your `forwardArrows` (the down arrow by default), focus moves
+- If you press one of your `next` `keybindings` (the down arrow by default), focus moves
   from the currently focused member to the next member in the group (or wraps back
   to the front, according to the `wrap` option).
-- If you press one of your `backArrows` (the up arrow by default), focus moves
+- If you press one of your `prev` `keybindings` (the up arrow by default), focus moves
   from the currently focused member to the previous member in the group (or wraps around
   to the back, according to the `wrap` option).
 - If you press a letter key, string searching begins (see below!).
@@ -81,13 +81,16 @@ var myMegaMenuFocusGroup = createFocusGroup();
 
 You can omit this option and add members later with `addMember()` or `setMembers()`. Default: `[]`.
 
-**forwardArrows** { Array of `'up'`, `'down'`, `'left'`, or `'right'` }:
-Specify which arrows should move the focus *forward* through the group (e.g. from index 2 to index 3).
-Default: `[ 'down' ]`
+**keybindings** { Object of `'next'`, `'prev'`, `'first'`, or `'last'` }:
+Specify which key events should move the focus *forward*, *back*, to the *first* member, or to the *last* member through the group. Provide objects (or arrays of objects) that describe the requirements of a [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent) that should trigger that keybinding.
 
-**backArrows** { Array of `'up'`, `'down'`, `'left'`, or `'right'` }:
-Specify which arrows should move the focus *back* through the group (e.g. from index 4 to index 3).
-Default: `[ 'up' ]`
+Default:
+``` js
+{
+  next: { keyCode: 40 }, // ArrowDown
+  prev: { keyCode: 38 }, // ArrowUp
+}
+```
 
 **wrap** { Boolean }:
 If `true`, when the arrow keys are moving focus they will wrap around the group. That is, when focus is on the last item and you move focus forward, the first item will focus; and when focus is on the first item and you move focus back, the last item will focus.

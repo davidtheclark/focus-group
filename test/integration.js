@@ -144,6 +144,48 @@ describe('modifier keys', function() {
   })
 });
 
+describe('all keybinding properties used', function() {
+  beforeEach(function () {
+    this.focusGroup = createFocusGroup({
+      members: [nodeOne, nodeTwo, nodeThree],
+      keybindings: {
+        next: arrowDownEvent,
+        prev: arrowUpEvent,
+        first: { keyCode: 36 },
+        last: { keyCode: 35 },
+      },
+    }).activate();
+  });
+
+  afterEach(function () {
+    this.focusGroup.deactivate();
+  });
+
+  it('move focus forward when hitting down arrow key', function() {
+    nodeOne.focus();
+    simulateKeydown(arrowDownEvent);
+    assertActiveElement(nodeTwo);
+  })
+
+  it('move focus backwards when hitting up arrow key', function() {
+    nodeTwo.focus();
+    simulateKeydown(arrowUpEvent);
+    assertActiveElement(nodeOne);
+  })
+
+  it('move focus to first node when hitting home key', function() {
+    nodeThree.focus();
+    simulateKeydown({ keyCode: 36 });
+    assertActiveElement(nodeOne);
+  })
+
+  it('move focus to last node when hitting end key', function() {
+    nodeOne.focus();
+    simulateKeydown({ keyCode: 35 });
+    assertActiveElement(nodeThree);
+  })
+});
+
 describe('wrap: true', function() {
   beforeEach(function() {
     this.focusGroup = createFocusGroup({
