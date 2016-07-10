@@ -186,6 +186,30 @@ describe('all keybinding properties used', function() {
   })
 });
 
+describe('arrows with modifier keys should not move focus by default', function() {
+  beforeEach(function() {
+    this.focusGroup = createFocusGroup({
+      members: [nodeOne, nodeTwo, nodeThree]
+    }).activate();
+  });
+
+  afterEach(function() {
+    this.focusGroup.deactivate();
+  });
+
+  it('down arrow with meta key should not move forward', function() {
+    nodeOne.focus();
+    simulateKeydown({ key: 'ArrowDown', metaKey: true });
+    assertActiveElement(nodeOne);
+  });
+
+  it('up arrow with shift key should not move back', function() {
+    nodeTwo.focus();
+    simulateKeydown({ key: 'ArrowUp', shiftKey: true });
+    assertActiveElement(nodeTwo);
+  });
+});
+
 describe('wrap: true', function() {
   beforeEach(function() {
     this.focusGroup = createFocusGroup({

@@ -82,13 +82,29 @@ var myMegaMenuFocusGroup = createFocusGroup();
 You can omit this option and add members later with `addMember()` or `setMembers()`. Default: `[]`.
 
 **keybindings** { Object of `'next'`, `'prev'`, `'first'`, or `'last'` }:
-Specify which key events should move the focus *forward*, *back*, to the *first* member, or to the *last* member through the group. Provide objects (or arrays of objects) that describe the requirements of a [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent) that should trigger that keybinding.
+Specify which key events should move the focus *forward*, *back*, to the *first* member, or to the *last* member through the group. Provide objects (or arrays of objects) that describe the requirements of a [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent) that should trigger that keybinding. Undesignated modifier keys are false by default. So when using something like `{ keyCode: 38 }`, that keybinding will be ignored if key 38 is combined with meta, ctrl, or alt.
 
 Default:
 ``` js
 {
   next: { keyCode: 40 }, // ArrowDown
   prev: { keyCode: 38 }, // ArrowUp
+}
+```
+
+Use arrays of objects for multiple key bindings:
+``` js
+{
+  next: [{ key: 'ArrowDown' }, { key: 'ArrowRight' }],
+  prev: [{ key: 'ArrowUp' }, { key: 'ArrowLeft' }],
+}
+```
+
+Even add modifiers or any valid event properties:
+``` js
+{
+  first: { keyCode: 74, metaKey: true },
+  last: { keyCode: 75, metaKey: true },
 }
 ```
 
