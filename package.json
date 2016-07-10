@@ -1,6 +1,6 @@
 {
   "name": "focus-group",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Create a group of nodes with special focusing powers",
   "main": "index.js",
   "scripts": {
