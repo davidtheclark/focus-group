@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.0
+- Removed `forwardArrows` and `backArrows` options in favor of `keybindings` option that accepts `next`, `prev`, `first`, or `last`.
+
 ## 0.2.3
 - Fix bug where providing a `0` index to `addMember()` failed.
 
