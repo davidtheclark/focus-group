@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.1
+- Fix bug when user-provided options are in a frozen object.
+
 ## 0.3.0
 - Removed `forwardArrows` and `backArrows` options in favor of `keybindings` option that accepts `next`, `prev`, `first`, or `last`.
 
