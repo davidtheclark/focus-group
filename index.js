@@ -1,12 +1,12 @@
 function FocusGroup(options) {
   options = options || {};
-  options.keybindings = options.keybindings || {};
+  var userKeybindings = options.keybindings || {};
   this._settings = {
     keybindings: {
-      next: (options.keybindings.next) || { keyCode: 40 },
-      prev: (options.keybindings.prev) || { keyCode: 38 },
-      first: options.keybindings.first,
-      last: options.keybindings.last,
+      next: (userKeybindings.next) || { keyCode: 40 },
+      prev: (userKeybindings.prev) || { keyCode: 38 },
+      first: userKeybindings.first,
+      last: userKeybindings.last,
     },
     wrap: options.wrap,
     stringSearch: options.stringSearch,
