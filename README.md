@@ -3,6 +3,12 @@
 [![Build Status](https://travis-ci.org/davidtheclark/focus-group.svg?branch=master)](https://travis-ci.org/davidtheclark/focus-group)
 [![Coverage Status](https://coveralls.io/repos/github/davidtheclark/focus-group/badge.svg?branch=master)](https://coveralls.io/github/davidtheclark/focus-group?branch=master)
 
+---
+
+**SEEKING CO-MAINTAINERS!** Continued development of this project is going to require the work of one or more dedicated co-maintainers (or forkers). If you're interested, please comment in [this issue](https://github.com/davidtheclark/focus-group/issues/12).
+
+---
+
 Create a group of nodes with special focus-related powers.
 
 Specifically, you can do the following with your focus group:
